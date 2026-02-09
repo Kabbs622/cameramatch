@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html><head><title>CameraMatch Feedback</title>
+<style>
+body{font-family:system-ui;background:#0a0a0b;color:#eee;padding:40px;max-width:900px;margin:0 auto}
+h1{margin-bottom:24px}
+.fb-item{background:#111;border:1px solid #2a2a30;border-radius:12px;padding:20px;margin-bottom:16px}
+.fb-meta{font-size:12px;color:#888;margin-bottom:8px;display:flex;gap:16px;flex-wrap:wrap}
+.fb-type{background:#dc2626;color:#fff;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:600}
+.fb-msg{font-size:15px;line-height:1.6;margin:12px 0}
+.fb-results{font-size:13px;color:#aaa}
+.empty{text-align:center;padding:60px;color:#666}
+</style></head><body>
+<h1>📋 Feedback Dashboard</h1>
+<div id="content"></div>
+<script>
+const items = JSON.parse(localStorage.getItem('cm_feedback') || '[]');
+if (!items.length) {
+  document.getElementById('content').innerHTML = '<div class="empty">No feedback yet.</div>';
+} else {
+  document.getElementById('content').innerHTML = items.reverse().map(fb => `
+    <div class="fb-item">
+      <div class="fb-meta">
+        <span class="fb-type">${fb.type}</span>
+        <span>Session: ${fb.sessionId}</span>
+        <span>Rating: ${'★'.repeat(fb.rating)}${'☆'.repeat(5-fb.rating)}</span>
+        <span>${new Date(fb.timestamp).toLocaleString()}</span>
+        ${fb.email ? '<span>📧 ' + fb.email + '</span>' : ''}
+      </div>
+      <div class="fb-msg">${fb.message}</div>
+      <div class="fb-results">Results: ${fb.topResults ? fb.topResults.map(r => r.cam + ' (' + r.score + ')').join(', ') : 'N/A'}</div>
+      <div class="fb-results" style="margin-top:4px">Answers: ${JSON.stringify(fb.answers || {})}</div>
+    </div>
+  `).join('');
+}
+</script></body></html>

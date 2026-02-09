@@ -1,0 +1,1880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CameraMatch - Find Your Camera</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0b;--surface:#111113;--surface2:#1a1a1e;--surface3:#222228;
+  --border:#2a2a30;--border2:#3a3a42;
+  --text:#eeeef0;--text2:#a0a0a8;--text3:#6a6a72;
+  --accent:#dc2626;--accent2:#ef4444;--accent-glow:rgba(220,38,38,.15);
+  --green:#22c55e;--green-glow:rgba(34,197,94,.15);
+  --amber:#f59e0b;--red:#ef4444;
+  --radius:12px;--radius-lg:16px;--radius-xl:20px;
+  --glass:rgba(255,255,255,.03);--glass2:rgba(255,255,255,.06);
+}
+html{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);scroll-behavior:smooth;-webkit-font-smoothing:antialiased}
+body{min-height:100vh;overflow-x:hidden}
+a{color:var(--accent2);text-decoration:none}
+
+.container{max-width:1080px;margin:0 auto;padding:0 24px}
+.fade-in{animation:fadeIn .5s ease both}
+.fade-up{animation:fadeUp .6s ease both}
+.slide-left{animation:slideLeft .4s ease both}
+.slide-right{animation:slideRight .4s ease both}
+
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideLeft{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
+@keyframes slideRight{from{opacity:0;transform:translateX(-40px)}to{opacity:1;transform:translateX(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+.screen{display:none;min-height:100vh}
+.screen.active{display:block}
+.screen.fade-out{opacity:0;transition:opacity .3s ease}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:16px 24px;background:rgba(10,10,11,.8);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+nav .nav-inner{max-width:1080px;margin:0 auto;display:flex;align-items:center;justify-content:space-between}
+.logo{font-weight:700;font-size:18px;letter-spacing:-.5px;display:flex;align-items:center;gap:8px;cursor:pointer}
+.logo-icon{width:28px;height:28px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.nav-links{display:flex;align-items:center;gap:16px}
+.nav-link{font-size:13px;color:var(--text2);cursor:pointer;transition:color .2s;position:relative}
+.nav-link:hover{color:var(--text)}
+.nav-badge{position:absolute;top:-8px;right:-12px;background:var(--accent);color:#fff;font-size:10px;font-weight:700;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 4px}
+.quiz-active nav.main-nav{display:none}
+
+#hub-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;min-height:100vh}
+.hub-bg{position:absolute;inset:0;overflow:hidden}
+.hub-bg::before{content:'';position:absolute;top:-30%;left:50%;transform:translateX(-50%);width:800px;height:800px;background:radial-gradient(circle,rgba(220,38,38,.12) 0%,transparent 70%);pointer-events:none}
+.hub-bg::after{content:'';position:absolute;bottom:-20%;right:-10%;width:600px;height:600px;background:radial-gradient(circle,rgba(34,197,94,.06) 0%,transparent 70%);pointer-events:none}
+
+.hub-content{position:relative;text-align:center;max-width:720px;padding:100px 24px 40px}
+.hub-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:var(--glass2);border:1px solid var(--border);border-radius:100px;font-size:12px;color:var(--text2);margin-bottom:28px;font-weight:500}
+.hub-badge .dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+h1.hub-title{font-size:clamp(36px,6vw,56px);font-weight:800;letter-spacing:-1.5px;line-height:1.1;margin-bottom:16px;background:linear-gradient(135deg,#fff 0%,#a0a0a8 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hub-subtitle{font-size:clamp(16px,2.5vw,18px);color:var(--text2);line-height:1.6;margin-bottom:48px;font-weight:400;max-width:540px;margin-left:auto;margin-right:auto}
+
+.quiz-hub-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;max-width:720px;width:100%;padding:0 24px;position:relative}
+.quiz-hub-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);padding:28px;text-align:left;transition:all .3s ease;cursor:pointer;position:relative;overflow:hidden}
+.quiz-hub-card:hover{border-color:var(--accent);transform:translateY(-3px);box-shadow:0 8px 32px rgba(0,0,0,.3)}
+.quiz-hub-card.disabled{cursor:not-allowed;opacity:.5}
+.quiz-hub-card.disabled:hover{border-color:var(--border);transform:none;box-shadow:none}
+.quiz-hub-card .card-icon{font-size:28px;margin-bottom:14px}
+.quiz-hub-card .card-title{font-size:18px;font-weight:700;margin-bottom:6px;letter-spacing:-.3px}
+.quiz-hub-card .card-desc{font-size:13px;color:var(--text2);line-height:1.5;margin-bottom:14px}
+.quiz-hub-card .card-meta{font-size:12px;color:var(--text3);display:flex;align-items:center;gap:6px}
+.quiz-hub-card .card-badge{padding:3px 8px;background:var(--accent-glow);color:var(--accent2);border-radius:6px;font-weight:600;font-size:11px}
+.quiz-hub-card .card-badge.soon{background:var(--glass2);color:var(--text3)}
+
+/* How It Works video placeholder */
+.how-it-works-section{position:relative;max-width:720px;width:100%;padding:24px 24px 0}
+.how-it-works-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);padding:24px;text-align:center}
+.how-it-works-card .hiw-label{font-size:13px;color:var(--accent2);font-weight:600;margin-bottom:4px}
+.how-it-works-card .hiw-title{font-size:16px;font-weight:700;margin-bottom:16px}
+.video-placeholder{width:100%;aspect-ratio:16/9;background:#0d0d0f;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;border:1px solid var(--border)}
+.video-placeholder .play-icon{width:64px;height:64px;background:rgba(255,255,255,.1);border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background .2s}
+.video-placeholder:hover .play-icon{background:rgba(220,38,38,.3)}
+.play-icon::after{content:'';width:0;height:0;border-style:solid;border-width:12px 0 12px 22px;border-color:transparent transparent transparent rgba(255,255,255,.7);margin-left:4px}
+
+.coming-soon-section{position:relative;max-width:720px;width:100%;padding:40px 24px 0}
+.coming-soon-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:2px;font-weight:600;margin-bottom:14px}
+.coming-soon-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.coming-soon-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;text-align:left;opacity:.4;cursor:not-allowed}
+.coming-soon-card .cs-icon{font-size:20px;margin-bottom:8px}
+.coming-soon-card .cs-title{font-size:14px;font-weight:600;margin-bottom:2px}
+.coming-soon-card .cs-sub{font-size:11px;color:var(--text3)}
+
+.hub-footer-stats{display:flex;justify-content:center;gap:48px;margin-top:56px;position:relative;padding:0 24px}
+.stat{text-align:center}
+.stat-value{font-size:28px;font-weight:700;color:var(--text)}
+.stat-label{font-size:12px;color:var(--text3);margin-top:4px;text-transform:uppercase;letter-spacing:1px}
+
+#quiz-screen{position:fixed;inset:0;z-index:200;background:var(--bg);overflow-y:auto}
+.quiz-header{position:fixed;top:0;left:0;right:0;z-index:210;background:rgba(10,10,11,.9);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0}
+.quiz-header-inner{max-width:1080px;margin:0 auto;padding:16px 24px;display:flex;align-items:center;justify-content:space-between}
+.quiz-progress-wrap{width:100%;height:3px;background:var(--surface3);position:absolute;bottom:0;left:0}
+.quiz-progress-bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:0 2px 2px 0;transition:width .5s cubic-bezier(.4,0,.2,1)}
+.quiz-step{font-size:13px;color:var(--text3);font-weight:500}
+.quiz-back{font-size:13px;color:var(--text2);cursor:pointer;display:flex;align-items:center;gap:4px;transition:color .2s;background:none;border:none;font-family:inherit}
+.quiz-back:hover{color:var(--text)}
+.quiz-close{font-size:13px;color:var(--text3);cursor:pointer;background:none;border:none;font-family:inherit;transition:color .2s;padding:4px 8px}
+.quiz-close:hover{color:var(--text)}
+
+.quiz-body{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:80px 24px 40px}
+.quiz-card{max-width:600px;width:100%;position:relative}
+.question-wrap{position:relative}
+.question-num{font-size:12px;color:var(--accent2);font-weight:600;text-transform:uppercase;letter-spacing:2px;margin-bottom:12px}
+.question-text{font-size:clamp(22px,4vw,30px);font-weight:700;letter-spacing:-.5px;line-height:1.3;margin-bottom:36px}
+.options{display:flex;flex-direction:column;gap:10px}
+.option{padding:16px 20px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;transition:all .2s ease;font-size:15px;color:var(--text2);display:flex;align-items:center;gap:12px}
+.option:hover{border-color:var(--accent);color:var(--text);background:var(--accent-glow)}
+.option.selected{border-color:var(--accent);color:var(--text);background:var(--accent-glow)}
+.option-dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--border2);flex-shrink:0;transition:all .2s;display:flex;align-items:center;justify-content:center}
+.option.selected .option-dot{border-color:var(--accent);background:var(--accent)}
+.option.selected .option-dot::after{content:'';width:6px;height:6px;background:#fff;border-radius:50%}
+
+/* Checkbox option for multi-select */
+.option-checkbox{width:18px;height:18px;border-radius:4px;border:2px solid var(--border2);flex-shrink:0;transition:all .2s;display:flex;align-items:center;justify-content:center}
+.option.selected .option-checkbox{border-color:var(--accent);background:var(--accent)}
+.option.selected .option-checkbox::after{content:'✓';font-size:12px;color:#fff;font-weight:700}
+
+.multi-next-btn{margin-top:20px;display:none}
+.multi-next-btn.visible{display:block}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 28px;border-radius:var(--radius);font-size:15px;font-weight:600;border:none;cursor:pointer;transition:all .25s ease;font-family:inherit;position:relative;overflow:hidden}
+.btn-primary{background:var(--accent);color:#fff;box-shadow:0 0 20px rgba(220,38,38,.3)}
+.btn-primary:hover{background:var(--accent2);box-shadow:0 0 30px rgba(220,38,38,.4);transform:translateY(-1px)}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+.btn-secondary:hover{border-color:var(--border2);background:var(--surface3)}
+.btn-disabled{background:var(--surface2);color:var(--text3);border:1px solid var(--border);cursor:not-allowed;opacity:.5}
+.btn-sm{padding:10px 18px;font-size:13px;border-radius:8px}
+.btn-green{background:var(--green);color:#fff;box-shadow:0 0 20px rgba(34,197,94,.2)}
+.btn-green:hover{box-shadow:0 0 30px rgba(34,197,94,.3);transform:translateY(-1px)}
+
+/* RESULTS */
+#results-screen{padding:80px 24px 60px}
+.results-header{text-align:center;margin-bottom:32px}
+.results-header h2{font-size:clamp(24px,4vw,36px);font-weight:800;letter-spacing:-1px;margin-bottom:8px}
+.results-header p{color:var(--text2);font-size:15px}
+
+/* Unified comparison grid */
+.unified-comparison{max-width:960px;margin:0 auto;overflow-x:auto}
+.unified-comparison table{width:100%;border-collapse:separate;border-spacing:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden}
+.unified-comparison th,.unified-comparison td{padding:10px 14px;text-align:center;font-size:13px;border-bottom:1px solid var(--border)}
+.unified-comparison th.spec-label-col,.unified-comparison td.spec-label-col{text-align:left;font-weight:500;color:var(--text2);background:var(--surface2);font-size:12px;white-space:nowrap;width:110px}
+.unified-comparison th.cam-col{padding:20px 14px;vertical-align:top;min-width:180px}
+.unified-comparison th.cam-col.top-pick-col{background:rgba(220,38,38,.06);border-left:2px solid var(--accent);border-right:2px solid var(--accent)}
+.unified-comparison td.top-pick-col{background:rgba(220,38,38,.03);border-left:2px solid var(--accent);border-right:2px solid var(--accent)}
+.unified-comparison tr:last-child td.top-pick-col{border-bottom:2px solid var(--accent)}
+.cam-col-image{width:80px;height:54px;border-radius:8px;margin:0 auto 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden}
+.cam-col-image .cam-img-brand{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.5)}
+.cam-col-image .cam-img-icon{font-size:18px;opacity:.7}
+.cam-col-image .cam-img-model{font-size:9px;font-weight:600;color:rgba(255,255,255,.8);text-align:center;line-height:1.2}
+.cam-col-name{font-size:15px;font-weight:700;color:var(--text);margin-bottom:4px}
+.cam-col-price{font-size:16px;font-weight:700;color:var(--green);margin-bottom:4px}
+.cam-col-match{display:inline-block;font-size:12px;font-weight:600;color:var(--accent2);background:var(--accent-glow);padding:2px 8px;border-radius:6px;margin-bottom:4px}
+.cam-col-toppick{font-size:10px;font-weight:700;color:var(--accent2);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.cam-col-btn{margin-top:8px}
+.unified-comparison td .check{color:var(--green)}
+.unified-comparison td .cross{color:var(--red)}
+.unified-comparison tr:last-child td,.unified-comparison tr:last-child th{border-bottom:none}
+
+/* Stretch pick & best overall cards */
+.extra-picks{max-width:960px;margin:32px auto 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.extra-pick-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);padding:24px;position:relative;overflow:hidden}
+.extra-pick-card .epc-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.extra-pick-card.stretch .epc-label{color:var(--amber)}
+.extra-pick-card.best-overall .epc-label{color:var(--green)}
+.extra-pick-card .epc-cam-row{display:flex;gap:16px;align-items:flex-start}
+.extra-pick-card .epc-image{width:80px;height:54px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0}
+.extra-pick-card .epc-info{flex:1}
+.extra-pick-card .epc-name{font-size:16px;font-weight:700;margin-bottom:4px}
+.extra-pick-card .epc-price{font-size:15px;font-weight:700;color:var(--green);margin-bottom:4px}
+.extra-pick-card .epc-over{font-size:13px;color:var(--amber);font-weight:600;margin-bottom:8px}
+.extra-pick-card .epc-feature{font-size:12px;color:var(--text2);margin-bottom:10px}
+.scoring-link{max-width:960px;margin:16px auto 0;text-align:center}
+.scoring-link a{font-size:13px;color:var(--text3);transition:color .2s}
+.scoring-link a:hover{color:var(--accent2)}
+
+/* Email capture overlay */
+.email-overlay{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .3s;pointer-events:none}
+.email-overlay.visible{opacity:1;pointer-events:auto}
+.email-popup{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);padding:32px;max-width:440px;width:90%;position:relative}
+.email-popup h3{font-size:20px;font-weight:700;margin-bottom:6px}
+.email-popup .email-sub{font-size:13px;color:var(--text2);margin-bottom:20px}
+.email-popup input[type="email"]{width:100%;padding:12px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;font-family:inherit;outline:none;margin-bottom:16px;transition:border-color .2s}
+.email-popup input[type="email"]:focus{border-color:var(--accent)}
+.email-popup input[type="email"]::placeholder{color:var(--text3)}
+.email-popup .popup-actions{display:flex;align-items:center;gap:12px;margin-top:8px}
+.email-popup .popup-skip{font-size:13px;color:var(--text3);cursor:pointer;background:none;border:none;font-family:inherit;transition:color .2s}
+.email-popup .popup-skip:hover{color:var(--text)}
+
+/* Login modal */
+.login-overlay{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .3s;pointer-events:none}
+.login-overlay.visible{opacity:1;pointer-events:auto}
+.login-popup{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);padding:32px;max-width:400px;width:90%;text-align:center}
+.login-popup h3{font-size:20px;font-weight:700;margin-bottom:10px}
+.login-popup p{font-size:14px;color:var(--text2);line-height:1.6;margin-bottom:20px}
+
+/* Personally Used badge */
+.badge-tested{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;background:rgba(34,197,94,.12);color:var(--green);border-radius:6px;font-size:11px;font-weight:600;letter-spacing:.3px}
+
+/* Brand-specific gradients */
+.cam-image-box{width:180px;height:120px;border-radius:var(--radius);flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;aspect-ratio:3/2}
+.cam-image-box .cam-img-brand{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:rgba(255,255,255,.5);margin-bottom:4px}
+.cam-image-box .cam-img-icon{font-size:32px;margin-bottom:6px;opacity:.7}
+.cam-image-box .cam-img-model{font-size:12px;font-weight:600;color:rgba(255,255,255,.8);text-align:center;line-height:1.3}
+
+.brand-sony{background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%)}
+.brand-canon{background:linear-gradient(135deg,#2d1117 0%,#3d1520 50%,#5c1a28 100%)}
+.brand-panasonic{background:linear-gradient(135deg,#1a2332 0%,#1e3a5f 50%,#1a4a6e 100%)}
+.brand-blackmagic{background:linear-gradient(135deg,#1a1a1a 0%,#2a2a2a 50%,#333 100%)}
+.brand-fujifilm{background:linear-gradient(135deg,#1a2e1a 0%,#1e3a1e 50%,#2a4a2a 100%)}
+.brand-nikon{background:linear-gradient(135deg,#2e2a1a 0%,#3e3520 50%,#4a4028 100%)}
+.brand-dji{background:linear-gradient(135deg,#1a1a2e 0%,#252540 50%,#303055 100%)}
+.brand-gopro{background:linear-gradient(135deg,#1a2e2e 0%,#1e3a3a 50%,#2a4a4a 100%)}
+.brand-red{background:linear-gradient(135deg,#2e0a0a 0%,#4a1010 50%,#5c1818 100%)}
+.brand-default{background:linear-gradient(135deg,#1a1a1e 0%,#2a2a30 50%,#333340 100%)}
+
+/* KIT PAGE */
+#kit-screen{padding:100px 24px 60px}
+.kit-back{display:inline-flex;align-items:center;gap:8px;color:var(--text);font-size:15px;font-weight:600;cursor:pointer;margin-bottom:32px;transition:all .2s;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 18px;font-family:inherit}
+.kit-back:hover{border-color:var(--accent);color:var(--accent2);background:var(--accent-glow)}
+.kit-header{display:flex;gap:32px;align-items:flex-start;margin-bottom:48px;flex-wrap:wrap}
+.kit-image{width:240px;height:160px;border-radius:var(--radius-lg);flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;aspect-ratio:3/2}
+.kit-image .cam-img-brand{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:rgba(255,255,255,.5);margin-bottom:4px}
+.kit-image .cam-img-icon{font-size:48px;margin-bottom:8px;opacity:.7}
+.kit-image .cam-img-model{font-size:14px;font-weight:600;color:rgba(255,255,255,.8);text-align:center}
+.kit-info h2{font-size:clamp(24px,4vw,36px);font-weight:800;letter-spacing:-.5px;margin-bottom:4px}
+.kit-info .kit-brand{font-size:14px;color:var(--text3);margin-bottom:8px}
+.kit-info .kit-price{font-size:24px;font-weight:700;color:var(--green);margin-bottom:12px}
+.kit-buy-row{display:flex;gap:10px;flex-wrap:wrap}
+
+.kit-section{margin-bottom:40px}
+.kit-section h3{font-size:18px;font-weight:700;margin-bottom:16px;letter-spacing:-.3px}
+.kit-section h4{font-size:14px;font-weight:600;color:var(--text2);margin-bottom:12px;text-transform:uppercase;letter-spacing:1px}
+
+.specs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:24px}
+.spec-item{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:14px}
+.spec-item .spec-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+.spec-item .spec-value{font-size:14px;font-weight:600}
+
+.pros-cons{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+@media(max-width:600px){.pros-cons{grid-template-columns:1fr}}
+.pros,.cons{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+.pros h4,.cons h4{margin-bottom:10px;font-size:13px}
+.pros h4{color:var(--green)}
+.cons h4{color:var(--red)}
+.pros ul,.cons ul{list-style:none;margin:0;padding:0}
+.pros li,.cons li{list-style:none;font-size:13px;color:var(--text2);line-height:1.6;padding-left:16px;position:relative;margin-bottom:4px}
+.pros li::before{content:'✓';position:absolute;left:0;color:var(--green);font-size:12px}
+.cons li::before{content:'✗';position:absolute;left:0;color:var(--red);font-size:12px}
+
+/* Lens and accessory image placeholders */
+.item-image-box{width:100%;height:80px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--surface3) 0%,var(--border) 100%);margin-bottom:10px;aspect-ratio:3/2}
+.item-image-box .item-img-icon{font-size:24px;opacity:.5;margin-bottom:4px}
+.item-image-box .item-img-name{font-size:10px;color:var(--text3);text-align:center;padding:0 8px;line-height:1.3}
+
+.lens-cards,.accessory-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-bottom:20px}
+.lens-card,.acc-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;transition:border-color .2s;position:relative}
+.lens-card:hover,.acc-card:hover{border-color:var(--border2)}
+.lens-card .lens-name,.acc-card .acc-name{font-size:14px;font-weight:600;margin-bottom:4px}
+.lens-card .lens-detail{font-size:12px;color:var(--text3);margin-bottom:4px}
+.lens-card .lens-price,.acc-card .acc-price{font-size:14px;font-weight:700;color:var(--green);margin-bottom:4px}
+.lens-card .lens-for{font-size:11px;color:var(--text3);margin-bottom:8px}
+.acc-card .acc-detail{font-size:12px;color:var(--text3);margin-bottom:8px}
+
+/* Kyle's Pick section */
+.kyles-pick{background:var(--surface);border:2px solid var(--accent);border-radius:var(--radius-xl);padding:24px;margin-bottom:24px;position:relative}
+.kyles-pick::before{content:"KYLE'S PICK";position:absolute;top:-10px;left:20px;font-size:11px;font-weight:700;color:var(--accent2);background:var(--bg);padding:0 8px;letter-spacing:1px}
+.kyles-pick-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;margin-top:8px}
+.kyles-pick-item{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:14px}
+.kyles-pick-item .kp-type{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+.kyles-pick-item .kp-name{font-size:14px;font-weight:600;margin-bottom:2px}
+.kyles-pick-item .kp-price{font-size:14px;font-weight:700;color:var(--green)}
+
+/* Kit budget summary */
+.kit-budget-summary{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;margin-bottom:32px}
+.kit-budget-summary h3{font-size:16px;font-weight:700;margin-bottom:16px;letter-spacing:-.3px}
+.kit-budget-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:14px}
+.kit-budget-row:last-child{border-bottom:none}
+.kit-budget-row .budget-label{color:var(--text2)}
+.kit-budget-row .budget-value{font-weight:600}
+.kit-budget-row .budget-value.green{color:var(--green)}
+.kit-budget-row .budget-value.red{color:var(--red)}
+.kit-budget-row.total{font-weight:700;font-size:15px}
+
+.kit-suggested-items{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-top:16px;margin-bottom:24px}
+.kit-suggested-item{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+.kit-suggested-item .ksi-type{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+.kit-suggested-item .ksi-name{font-size:14px;font-weight:600;margin-bottom:2px}
+.kit-suggested-item .ksi-detail{font-size:12px;color:var(--text3);margin-bottom:4px}
+.kit-suggested-item .ksi-price{font-size:14px;font-weight:700;color:var(--green)}
+
+/* GEAR LIST PAGE */
+#gearlist-screen{padding:100px 24px 60px}
+.gearlist-total{background:linear-gradient(135deg,var(--surface) 0%,var(--surface2) 100%);border:2px solid var(--accent);border-radius:var(--radius-xl);padding:24px;text-align:center;margin-bottom:32px}
+.gearlist-total .gl-total-label{font-size:13px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+.gearlist-total .gl-total-value{font-size:36px;font-weight:800;color:var(--green)}
+.gearlist-category{margin-bottom:28px}
+.gearlist-category h3{font-size:15px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.gl-item{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px;flex-wrap:wrap}
+.gl-item-name{flex:1;font-size:14px;font-weight:600;min-width:140px}
+.gl-item-price{font-size:14px;font-weight:700;color:var(--green);min-width:80px}
+.gl-item-links{display:flex;gap:6px;flex-wrap:wrap}
+.gl-item-links a{font-size:11px;padding:5px 10px;background:var(--surface3);border:1px solid var(--border);border-radius:6px;color:var(--text2);transition:all .2s;font-weight:500}
+.gl-item-links a:hover{border-color:var(--accent);color:var(--accent2)}
+.gl-remove{background:none;border:none;color:var(--text3);font-size:16px;cursor:pointer;padding:4px 8px;transition:color .2s;font-family:inherit}
+.gl-remove:hover{color:var(--red)}
+.gearlist-empty{text-align:center;padding:60px 20px;color:var(--text3)}
+.gearlist-empty .gle-icon{font-size:48px;margin-bottom:16px;opacity:.5}
+.gearlist-empty p{font-size:16px;margin-bottom:20px}
+.gearlist-note{text-align:center;font-size:12px;color:var(--text3);margin-top:32px;padding-top:16px;border-top:1px solid var(--border)}
+
+/* SCORING PAGE */
+#scoring-screen{padding:100px 24px 60px}
+.scoring-content{max-width:760px;margin:0 auto}
+.scoring-content h2{font-size:clamp(24px,4vw,36px);font-weight:800;letter-spacing:-1px;margin-bottom:8px}
+.scoring-content .scoring-intro{font-size:16px;color:var(--text2);line-height:1.6;margin-bottom:32px}
+.scoring-content .scoring-tldr{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px;margin-bottom:40px}
+.scoring-content .scoring-tldr h3{font-size:15px;font-weight:700;margin-bottom:10px;color:var(--accent2)}
+.scoring-content .scoring-tldr ul{list-style:none;padding:0;margin:0}
+.scoring-content .scoring-tldr li{font-size:14px;color:var(--text2);line-height:1.6;padding:4px 0;padding-left:20px;position:relative}
+.scoring-content .scoring-tldr li::before{content:'→';position:absolute;left:0;color:var(--accent)}
+.scoring-flow{display:grid;grid-template-columns:1fr;gap:0;margin-bottom:40px;position:relative}
+.scoring-flow::before{content:'';position:absolute;left:24px;top:40px;bottom:40px;width:2px;background:var(--border)}
+.scoring-step{display:grid;grid-template-columns:48px 1fr;gap:16px;align-items:start;padding:16px 0}
+.scoring-step-num{width:48px;height:48px;border-radius:50%;background:var(--surface2);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;color:var(--accent2);z-index:1}
+.scoring-step-content h3{font-size:16px;font-weight:700;margin-bottom:4px;color:var(--text)}
+.scoring-step-content p{font-size:14px;color:var(--text2);line-height:1.6;margin:0}
+.scoring-step-content .step-weight{display:inline-block;font-size:11px;font-weight:600;color:var(--accent);background:var(--accent-glow);padding:2px 8px;border-radius:4px;margin-top:6px}
+.scoring-factors{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:32px 0}
+.scoring-factor-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center}
+.scoring-factor-card .sf-emoji{font-size:24px;margin-bottom:6px}
+.scoring-factor-card .sf-name{font-size:13px;font-weight:600;color:var(--text)}
+.scoring-factor-card .sf-weight{font-size:12px;color:var(--text3);margin-top:2px}
+.scoring-note{background:var(--surface);border-left:3px solid var(--accent);padding:16px 20px;border-radius:0 var(--radius) var(--radius) 0;margin:24px 0}
+.scoring-note p{font-size:14px;color:var(--text2);line-height:1.6;margin:0}
+.scoring-note strong{color:var(--text)}
+.scoring-section{margin-bottom:28px}
+.scoring-section h3{font-size:18px;font-weight:700;margin-bottom:8px;color:var(--text)}
+.scoring-section p{font-size:14px;color:var(--text2);line-height:1.7}
+
+#library-screen{padding:100px 24px 60px}
+.library-header{max-width:960px;margin:0 auto 32px;text-align:center}
+.library-header h2{font-size:clamp(24px,4vw,32px);font-weight:800;letter-spacing:-1px;margin-bottom:8px}
+.library-header p{color:var(--text2);font-size:15px}
+.library-filters{max-width:960px;margin:0 auto 24px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.lib-filter{background:var(--surface2);border:1px solid var(--border);color:var(--text2);padding:8px 16px;border-radius:100px;font-size:13px;font-family:inherit;cursor:pointer;transition:all .2s}
+.lib-filter:hover{border-color:var(--border2);color:var(--text)}
+.lib-filter.active{background:var(--accent-glow);border-color:var(--accent);color:var(--accent2)}
+.library-compare-bar{position:fixed;bottom:0;left:0;right:0;z-index:200;background:rgba(10,10,11,.95);backdrop-filter:blur(20px);border-top:2px solid var(--accent);padding:14px 24px;display:none;justify-content:center;align-items:center;gap:16px}
+.library-compare-bar.visible{display:flex}
+.lcb-chips{display:flex;gap:8px;flex-wrap:wrap}
+.lcb-chip{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:13px;color:var(--text);display:flex;align-items:center;gap:6px}
+.lcb-chip .lcb-remove{cursor:pointer;color:var(--text3);font-size:16px}
+.lcb-chip .lcb-remove:hover{color:var(--accent2)}
+.library-grid{max-width:960px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+.lib-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;cursor:pointer;transition:all .2s;position:relative}
+.lib-card:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.3)}
+.lib-card.selected{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.lib-card .lib-check{position:absolute;top:12px;right:12px;width:22px;height:22px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .2s}
+.lib-card.selected .lib-check{background:var(--accent);border-color:var(--accent);color:#fff}
+.lib-card-img{height:80px;display:flex;align-items:center;justify-content:center;margin-bottom:12px;font-size:36px;opacity:.6}
+.lib-card-brand{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px}
+.lib-card-name{font-size:15px;font-weight:700;margin-bottom:6px}
+.lib-card-price{font-size:14px;color:var(--accent2);font-weight:600;margin-bottom:8px}
+.lib-card-specs{display:flex;flex-wrap:wrap;gap:4px}
+.lib-card-specs span{font-size:11px;color:var(--text3);background:var(--surface2);padding:2px 6px;border-radius:4px}
+.lib-card-actions{margin-top:12px;display:flex;gap:8px}
+.library-empty{text-align:center;padding:60px;color:var(--text3)}
+
+/* Feedback */
+.feedback-section{max-width:960px;margin:32px auto 0;text-align:center}
+.feedback-btn{background:var(--surface2);border:1px solid var(--border);color:var(--text2);padding:12px 24px;border-radius:100px;font-size:14px;font-family:inherit;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:8px}
+.feedback-btn:hover{border-color:var(--accent);color:var(--accent2);background:var(--accent-glow)}
+.feedback-overlay{position:fixed;top:0;left:0;right:0;bottom:0;z-index:500;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;padding:24px}
+.feedback-overlay.visible{display:flex}
+.feedback-popup{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);padding:32px;max-width:520px;width:100%;max-height:90vh;overflow-y:auto}
+.feedback-popup h3{font-size:20px;font-weight:700;margin-bottom:6px}
+.feedback-popup .fb-session{font-size:12px;color:var(--text3);margin-bottom:20px;font-family:monospace}
+.feedback-popup label{display:block;font-size:13px;font-weight:600;color:var(--text2);margin-bottom:6px;margin-top:16px}
+.feedback-popup select,.feedback-popup textarea,.feedback-popup input{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:8px;font-size:14px;font-family:inherit;resize:vertical}
+.feedback-popup select:focus,.feedback-popup textarea:focus,.feedback-popup input:focus{outline:none;border-color:var(--accent)}
+.feedback-popup textarea{min-height:100px}
+.fb-actions{display:flex;gap:10px;margin-top:20px}
+.fb-actions button{flex:1}
+.fb-rating{display:flex;gap:6px;margin-top:6px}
+.fb-rating button{width:40px;height:40px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);color:var(--text2);font-size:16px;cursor:pointer;transition:all .2s;font-family:inherit}
+.fb-rating button:hover,.fb-rating button.active{border-color:var(--accent);color:var(--accent2);background:var(--accent-glow)}
+
+footer{padding:32px 24px;text-align:center;color:var(--text3);font-size:12px;border-top:1px solid var(--border);margin-top:48px}
+
+/* Deal alerts button */
+.btn-deal-alert{background:var(--surface2);color:var(--text2);border:1px solid var(--border);padding:8px 14px;font-size:12px;border-radius:8px;cursor:pointer;transition:all .2s;font-family:inherit;display:inline-flex;align-items:center;gap:5px;width:100%;justify-content:center;margin-top:6px}
+.btn-deal-alert:hover{border-color:var(--accent);color:var(--accent2);background:var(--accent-glow)}
+
+/* Toast */
+.toast-container{position:fixed;bottom:32px;left:50%;transform:translateX(-50%);z-index:400;pointer-events:none}
+.toast{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:12px 24px;border-radius:100px;font-size:14px;font-weight:500;box-shadow:0 8px 32px rgba(0,0,0,.5);opacity:0;transform:translateY(20px);animation:toastIn .3s ease forwards}
+.toast.fade-out{animation:toastOut .3s ease forwards}
+@keyframes toastIn{to{opacity:1;transform:translateY(0)}}
+@keyframes toastOut{to{opacity:0;transform:translateY(20px)}}
+
+/* Save Results section */
+.save-results{max-width:960px;margin:40px auto 0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);padding:28px;text-align:center}
+.save-results h3{font-size:20px;font-weight:700;margin-bottom:16px;letter-spacing:-.3px}
+.save-results-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:500px;margin:0 auto}
+@media(max-width:500px){.save-results-grid{grid-template-columns:1fr}}
+.save-results-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:20px;cursor:pointer;transition:all .2s;text-align:center}
+.save-results-card:hover{border-color:var(--accent);background:var(--accent-glow)}
+.save-results-card .sr-icon{font-size:24px;margin-bottom:8px}
+.save-results-card .sr-label{font-size:14px;font-weight:600}
+.save-results-card .sr-sub{font-size:12px;color:var(--text3);margin-top:4px}
+.save-results-card.coming-soon-state{cursor:default;opacity:.7}
+.save-results-card.coming-soon-state:hover{border-color:var(--border);background:var(--surface2)}
+
+/* Responsive */
+@media(max-width:640px){
+  .hub-footer-stats{gap:24px}
+  .kit-header{flex-direction:column}
+  .kit-image{width:100%;height:160px}
+  .specs-grid{grid-template-columns:1fr 1fr}
+  .lens-cards,.accessory-cards{grid-template-columns:1fr}
+  .quiz-hub-grid{grid-template-columns:1fr}
+  .coming-soon-grid{grid-template-columns:1fr 1fr}
+  .unified-comparison{font-size:11px}
+  .unified-comparison th,.unified-comparison td{padding:6px 8px}
+  .cam-col-name{font-size:13px}
+  .cam-col-price{font-size:14px}
+  .extra-picks{grid-template-columns:1fr}
+  .gl-item{flex-direction:column;align-items:flex-start;gap:8px}
+}
+
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:3px}
+</style>
+</head>
+<body>
+
+<nav class="main-nav">
+  <div class="nav-inner">
+    <div class="logo" onclick="goHome()"><div class="logo-icon">C</div> CameraMatch</div>
+    <div class="nav-links">
+      <span class="nav-link" onclick="goHome()">Home</span>
+      <span class="nav-link" id="nav-results-link" style="display:none" onclick="showScreen('results')">📋 Results</span>
+      <span class="nav-link" onclick="showLibrary()">Browse Cameras</span>
+      <span class="nav-link" onclick="showScreen('gearlist')" id="nav-gearlist">📋 Gear List <span class="nav-badge" id="gearlist-badge" style="display:none">0</span></span>
+      <span class="nav-link" onclick="showLoginModal()">Log in</span>
+    </div>
+  </div>
+</nav>
+
+<!-- HUB / LANDING -->
+<div id="hub-screen" class="screen active">
+  <div class="hub-bg"></div>
+  <div class="hub-content fade-up">
+    <div class="hub-badge"><span class="dot"></span> Updated for 2026</div>
+    <h1 class="hub-title">Find Your Camera</h1>
+    <p class="hub-subtitle">Cut through the noise. Answer a few questions, get a real recommendation.</p>
+  </div>
+
+  <div class="quiz-hub-grid fade-up" style="animation-delay:.15s">
+    <div class="quiz-hub-card" onclick="startQuiz()">
+      <div class="card-icon">⚡</div>
+      <div class="card-title">Quick Match</div>
+      <div class="card-desc">10 questions about how you shoot. We recommend your top cameras with full kit breakdowns.</div>
+      <div class="card-meta">
+        <span class="card-badge">Ready</span>
+        <span>~2 minutes</span>
+      </div>
+    </div>
+    <div class="quiz-hub-card disabled">
+      <div class="card-icon">🔬</div>
+      <div class="card-title">Deep Dive</div>
+      <div class="card-desc">Compare specs, workflows, and real-world performance across every camera in our database.</div>
+      <div class="card-meta">
+        <span class="card-badge soon">Coming Soon</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- How It Works video placeholder -->
+  <div class="how-it-works-section fade-up" style="animation-delay:.2s">
+    <div class="how-it-works-card">
+      <div class="hiw-label">New here?</div>
+      <div class="hiw-title">Watch a quick walkthrough</div>
+      <div class="video-placeholder" id="video-placeholder">
+        <div class="play-icon"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="coming-soon-section fade-up" style="animation-delay:.3s">
+    <div class="coming-soon-label">More guides on the way</div>
+    <div class="coming-soon-grid">
+      <div class="coming-soon-card">
+        <div class="cs-icon">💡</div>
+        <div class="cs-title">Lighting</div>
+        <div class="cs-sub">Coming soon</div>
+      </div>
+      <div class="coming-soon-card">
+        <div class="cs-icon">🎙️</div>
+        <div class="cs-title">Audio</div>
+        <div class="cs-sub">Coming soon</div>
+      </div>
+      <div class="coming-soon-card">
+        <div class="cs-icon">💻</div>
+        <div class="cs-title">Editing Rigs</div>
+        <div class="cs-sub">Coming soon</div>
+      </div>
+      <div class="coming-soon-card">
+        <div class="cs-icon">🎒</div>
+        <div class="cs-title">Travel Kits</div>
+        <div class="cs-sub">Coming soon</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hub-footer-stats fade-up" style="animation-delay:.4s">
+    <div class="stat"><div class="stat-value">30+</div><div class="stat-label">Cameras</div></div>
+    <div class="stat"><div class="stat-value">6</div><div class="stat-label">Brands</div></div>
+  </div>
+</div>
+
+<!-- QUIZ -->
+<div id="quiz-screen" class="screen">
+  <div class="quiz-header">
+    <div class="quiz-header-inner">
+      <button class="quiz-back" id="quiz-back-btn" onclick="prevQuestion()">← Back</button>
+      <span class="quiz-step" id="quiz-step">1 / 11</span>
+      <button class="quiz-close" onclick="exitQuiz()">✕ Exit</button>
+    </div>
+    <div class="quiz-progress-wrap"><div class="quiz-progress-bar" id="quiz-progress"></div></div>
+  </div>
+  <div class="quiz-body">
+    <div class="quiz-card">
+      <div class="question-wrap" id="question-wrap"></div>
+    </div>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div id="results-screen" class="screen">
+  <div class="container">
+    <div class="results-header fade-up">
+      <h2>Your Top Matches</h2>
+      <p>Cameras that fit how you shoot, ranked by compatibility.</p>
+    </div>
+    <div class="unified-comparison fade-up" id="unified-comparison"></div>
+    <div id="extra-picks-container"></div>
+    <div class="scoring-link" id="scoring-link-container"></div>
+  </div>
+</div>
+
+<!-- GEAR LIST -->
+<div id="gearlist-screen" class="screen">
+  <div class="container">
+    <button class="kit-back" onclick="goHome()">← Home</button>
+    <h2 style="font-size:28px;font-weight:800;letter-spacing:-.5px;margin-bottom:24px">📋 Your Gear List</h2>
+    <div id="gearlist-content"></div>
+  </div>
+</div>
+
+<!-- SCORING / HOW WE SCORE -->
+<div id="scoring-screen" class="screen">
+  <div class="container">
+    <button class="kit-back" onclick="showScreen('results')">← Back to Results</button>
+    <div class="scoring-content">
+      <h2>How We Score</h2>
+      <p class="scoring-intro">Your match percentage reflects how well a camera fits <strong>your</strong> shooting style. Not a spec sheet ranking. Not a paid placement. Here's what goes into it.</p>
+
+      <div class="scoring-tldr">
+        <h3>The Short Version</h3>
+        <ul>
+          <li>Every answer you give adjusts what matters in the score</li>
+          <li>Match % is about <strong>your needs</strong>, not an objective "best camera" rating</li>
+          <li>Budget filters what shows up, but doesn't affect match %</li>
+          <li>Two people with different answers will get completely different results</li>
+          <li>No sponsors, no paid placements, no affiliate bias in scoring</li>
+        </ul>
+      </div>
+
+      <h3 style="font-size:20px;font-weight:800;margin-bottom:24px">How It Works</h3>
+
+      <div class="scoring-flow">
+        <div class="scoring-step">
+          <div class="scoring-step-num">1</div>
+          <div class="scoring-step-content">
+            <h3>You tell us what you shoot</h3>
+            <p>Weddings, docs, YouTube, commercials — each genre has different demands. A wedding shooter needs reliable AF and dual slots. A narrative filmmaker might not care about AF at all. We weight specs based on what actually matters for your work.</p>
+            <span class="step-weight">High impact</span>
+          </div>
+        </div>
+
+        <div class="scoring-step">
+          <div class="scoring-step-num">2</div>
+          <div class="scoring-step-content">
+            <h3>We match against real-world specs</h3>
+            <p>Not marketing specs. We use continuous recording battery life (not CIPA ratings), actual AF tracking performance (not just "phase detect"), and real data rates for storage calculations. If a camera says "4K120" but it overheats after 10 minutes, that matters.</p>
+            <span class="step-weight">Core logic</span>
+          </div>
+        </div>
+
+        <div class="scoring-step">
+          <div class="scoring-step-num">3</div>
+          <div class="scoring-step-content">
+            <h3>Your preferences shift the weights</h3>
+            <p>Said you need rock-solid autofocus? AF becomes a heavy factor. Prefer manual focus? We stop penalizing cameras without it. Solo shooter? Stabilization and compact size get a boost. Every answer reshapes what the score prioritizes.</p>
+            <span class="step-weight">Personalization layer</span>
+          </div>
+        </div>
+
+        <div class="scoring-step">
+          <div class="scoring-step-num">4</div>
+          <div class="scoring-step-content">
+            <h3>Cameras get ranked within your budget</h3>
+            <p>Budget determines which cameras show up, but it doesn't inflate or deflate match percentages. A $1,500 camera and a $5,000 camera are scored the same way against your needs. The percentage is purely about fit.</p>
+            <span class="step-weight">Budget = filter, not score</span>
+          </div>
+        </div>
+      </div>
+
+      <h3 style="font-size:18px;font-weight:700;margin-bottom:16px">What We Look At</h3>
+      <div class="scoring-factors">
+        <div class="scoring-factor-card"><div class="sf-emoji">🎬</div><div class="sf-name">Use Case Fit</div><div class="sf-weight">Heaviest weight</div></div>
+        <div class="scoring-factor-card"><div class="sf-emoji">🎯</div><div class="sf-name">Autofocus</div><div class="sf-weight">Based on your preference</div></div>
+        <div class="scoring-factor-card"><div class="sf-emoji">🌙</div><div class="sf-name">Low Light</div><div class="sf-weight">If you shoot in it</div></div>
+        <div class="scoring-factor-card"><div class="sf-emoji">🤝</div><div class="sf-name">Stabilization</div><div class="sf-weight">Solo shooters</div></div>
+        <div class="scoring-factor-card"><div class="sf-emoji">📸</div><div class="sf-name">Photo Quality</div><div class="sf-weight">If stills matter to you</div></div>
+        <div class="scoring-factor-card"><div class="sf-emoji">🐌</div><div class="sf-name">Slow Motion</div><div class="sf-weight">4K120 benchmark</div></div>
+        <div class="scoring-factor-card"><div class="sf-emoji">⚖️</div><div class="sf-name">Size & Weight</div><div class="sf-weight">If portability matters</div></div>
+        <div class="scoring-factor-card"><div class="sf-emoji">🔋</div><div class="sf-name">Battery & Slots</div><div class="sf-weight">Reliability bonus</div></div>
+        <div class="scoring-factor-card"><div class="sf-emoji">🏷️</div><div class="sf-name">Brand Preference</div><div class="sf-weight">If you picked one</div></div>
+      </div>
+
+      <div class="scoring-note">
+        <p><strong>About the "Stretch Pick"</strong> — If a camera outside your budget scores significantly higher on your needs (5%+ better match), we'll show it as an optional 4th column. It's not a recommendation to overspend. It's just showing you what's out there so you can make an informed call.</p>
+      </div>
+
+      <div class="scoring-note" style="margin-top:16px">
+        <p><strong>About the shoot day kit</strong> — Battery counts assume you're cycling with a dual charger (not buying enough to last 8 hours without charging). Memory card recommendations are sized for the camera's highest quality codec running continuously. Most real shoots use less storage because you're not rolling 8 hours straight at max bitrate.</p>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- EMAIL CAPTURE MODAL (reusable) -->
+<div class="email-overlay" id="email-overlay" onclick="closeEmailPopup(event)">
+  <div class="email-popup" onclick="event.stopPropagation()">
+    <h3 id="email-popup-title">Get deal alerts when prices drop</h3>
+    <div class="email-sub" id="email-popup-sub">Enter your email to get deal alerts when prices drop.</div>
+    <input type="email" id="popup-email" placeholder="you@email.com">
+    <div class="popup-actions">
+      <button class="btn btn-primary btn-sm" onclick="submitEmailPopup()">Get Alerts</button>
+      <button class="popup-skip" onclick="closeEmailPopup()">Skip</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOGIN MODAL -->
+<div class="login-overlay" id="login-overlay" onclick="closeLoginModal(event)">
+  <div class="login-popup" onclick="event.stopPropagation()">
+    <h3>Coming Soon</h3>
+    <p>Account creation coming soon. Create an account to save your results, get exclusive deals, and access free 3D print files.</p>
+    <button class="btn btn-primary btn-sm" onclick="closeLoginModal()">Got it</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- FULL KIT -->
+<div id="kit-screen" class="screen">
+  <div class="container">
+    <button class="kit-back" id="kit-back-btn" onclick="showScreen('results')">← Back to Results</button>
+    <div id="kit-content"></div>
+  </div>
+</div>
+
+<!-- LIBRARY COMPARE -->
+<div id="library-compare-screen" class="screen">
+  <div class="container" style="padding-top:100px">
+    <div id="library-compare-content"></div>
+  </div>
+</div>
+
+<!-- FEEDBACK MODAL -->
+<div class="feedback-overlay" id="feedback-overlay" onclick="closeFeedback(event)">
+  <div class="feedback-popup" onclick="event.stopPropagation()">
+    <h3>💬 How'd we do?</h3>
+    <div class="fb-session" id="fb-session-id"></div>
+    <label>How accurate were your results?</label>
+    <div class="fb-rating" id="fb-rating">
+      <button onclick="setRating(1)">1</button>
+      <button onclick="setRating(2)">2</button>
+      <button onclick="setRating(3)">3</button>
+      <button onclick="setRating(4)">4</button>
+      <button onclick="setRating(5)">5</button>
+    </div>
+    <label>What type of feedback?</label>
+    <select id="fb-type">
+      <option value="">Select one...</option>
+      <option value="wrong-result">I don't agree with my results</option>
+      <option value="missing-camera">A camera I wanted wasn't included</option>
+      <option value="wrong-specs">Some specs look wrong</option>
+      <option value="add-question">You should ask about [something]</option>
+      <option value="bug">Something broke or looked weird</option>
+      <option value="suggestion">General suggestion</option>
+      <option value="love-it">Just wanted to say I love it</option>
+    </select>
+    <label>Tell us more</label>
+    <textarea id="fb-message" placeholder="What cameras were you expecting? What questions should we add? What felt off?"></textarea>
+    <label>Email (optional, if you want a response)</label>
+    <input type="email" id="fb-email" placeholder="you@email.com">
+    <div class="fb-actions">
+      <button class="btn btn-secondary btn-sm" onclick="closeFeedback()">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="submitFeedback()">Send Feedback</button>
+    </div>
+  </div>
+</div>
+
+<!-- CAMERA LIBRARY -->
+<div id="library-screen" class="screen">
+  <div class="container">
+    <div class="library-header">
+      <h2>All Cameras</h2>
+      <p>Browse our full database. Select up to 3 to compare side-by-side, or click into any camera for full details.</p>
+    </div>
+    <div class="library-filters" id="library-filters"></div>
+    <div class="library-grid" id="library-grid"></div>
+  </div>
+  <div class="library-compare-bar" id="library-compare-bar">
+    <div class="lcb-chips" id="lcb-chips"></div>
+    <button class="btn btn-primary btn-sm" id="lcb-compare-btn" onclick="libraryCompare()">Compare</button>
+  </div>
+</div>
+
+<footer>CameraMatch &copy; 2026. Prices are approximate. Always check before you buy.</footer>
+
+<script>
+// ═══════════════════════════════════════════
+// DATABASE
+// ═══════════════════════════════════════════
+const DB = {
+cameras: [
+{"id":"sony-fx3","name":"Sony FX3","brand":"Sony","mount":"Sony E","price":3898,"sensorSize":"Full Frame","megapixels":12.1,"maxVideoResolution":"4K","frameRates":["4K120","4K60","1080p240"],"bitDepth":"8/10-bit","autofocus":"excellent","autofocusDetails":"Real-time Eye AF, subject tracking","stabilization":true,"stabilizationDetails":"5-axis IBIS + Active Mode","weightGrams":640,"primaryUseCases":["wedding","commercial","documentary","music video","narrative film","YouTube/content"],"experienceLevel":["intermediate","advanced","professional"],"runAndGunFriendly":true,"soloOperatorFriendly":true,"lowLightPerformance":"excellent","photoCapable":true,"photoQuality":"average","rawVideo":false,"dualSlots":true,"personallyUsed":false,"notablePros":["Real-time Eye AF with subject tracking across the full frame","Clean usable footage up to ISO 51200+, dual base ISO","Compact 640g cinema body with 1/4\"-20 and ARRI-standard mounting points"],"notableCons":["Maximum 4K resolution, no 6K or 8K oversampling","Requires CFexpress Type A cards for top recording modes","No built-in ND filters"],"batteryLife":"good","batteryType":"NP-FZ100","batteryMinutes":95,"batteryPrice":48,"batteryChargeMinutes":150,"cardType":"CFexpress Type A","cardSlots":2,"secondCardType":"SD UHS-II","cardGBPerHour":45,"recommendedCard":"ProGrade Digital CFexpress Type A 160GB","recommendedCardPrice":199,"recommendedCardCapacity":160},
+{"id":"sony-fx6","name":"Sony FX6","brand":"Sony","mount":"Sony E","price":5998,"sensorSize":"Full Frame","megapixels":10.2,"maxVideoResolution":"4K","frameRates":["4K120","4K60","1080p240"],"bitDepth":"8/10-bit","autofocus":"excellent","autofocusDetails":"Real-time tracking AF","stabilization":true,"stabilizationDetails":"Electronic stabilization","weightGrams":890,"primaryUseCases":["commercial","documentary","wedding","narrative film","music video"],"experienceLevel":["advanced","professional"],"runAndGunFriendly":true,"soloOperatorFriendly":true,"lowLightPerformance":"excellent","photoCapable":false,"photoQuality":"none","rawVideo":false,"dualSlots":true,"personallyUsed":false,"notablePros":["Built-in electronic variable ND filter (2-7 stops)","Dual Base ISO (800/12800) for flexible exposure in mixed lighting","Full-size XLR audio inputs with phantom power on detachable handle"],"notableCons":["No optical IBIS, electronic stabilization only","Similar image quality to FX3 at a higher price","890g body may need shoulder rig for extended handheld use"],"batteryLife":"excellent","batteryType":"NP-FZ100","batteryMinutes":130,"batteryPrice":48,"batteryChargeMinutes":150,"cardType":"SD UHS-II","cardSlots":2,"secondCardType":null,"cardGBPerHour":40,"recommendedCard":"ProGrade Gold 128GB V90 SD","recommendedCardPrice":110,"recommendedCardCapacity":128},
+{"id":"sony-fx30","name":"Sony FX30","brand":"Sony","mount":"Sony E","price":1798,"sensorSize":"APS-C (Super 35)","megapixels":20.1,"maxVideoResolution":"4K","frameRates":["4K120","4K60","1080p240"],"bitDepth":"8/10-bit","autofocus":"excellent","autofocusDetails":"Real-time Eye AF, subject tracking","stabilization":true,"stabilizationDetails":"5-axis IBIS","weightGrams":562,"primaryUseCases":["YouTube/content","documentary","wedding","commercial","social media","music video"],"experienceLevel":["beginner","intermediate","advanced"],"runAndGunFriendly":true,"soloOperatorFriendly":true,"lowLightPerformance":"good","photoCapable":true,"photoQuality":"average","rawVideo":false,"dualSlots":true,"personallyUsed":false,"notablePros":["Cinema-style body with S-Cinetone, S-Log3, and 10-bit 4:2:2 at $1,798","Same Real-time AF system as the FX3 and A7S III","S-Cinetone color profile produces broadcast-ready color with minimal grading"],"notableCons":["APS-C sensor has a 1.5x crop factor, narrowing field of view","No built-in ND filters","CFexpress Type A cards required for highest-quality recording modes"],"batteryLife":"good","batteryType":"NP-FZ100","batteryMinutes":95,"batteryPrice":48,"batteryChargeMinutes":150,"cardType":"CFexpress Type A","cardSlots":2,"secondCardType":"SD UHS-II","cardGBPerHour":45,"recommendedCard":"ProGrade Digital CFexpress Type A 160GB","recommendedCardPrice":199,"recommendedCardCapacity":160},
+{"id":"sony-a7siii","name":"Sony A7S III","brand":"Sony","mount":"Sony E","price":3498,"sensorSize":"Full Frame","megapixels":12.1,"maxVideoResolution":"4K","frameRates":["4K120","4K60","1080p240"],"bitDepth":"8/10-bit","autofocus":"excellent","autofocusDetails":"Real-time Eye AF, subject tracking","stabilization":true,"stabilizationDetails":"5-axis IBIS","weightGrams":699,"primaryUseCases":["wedding","documentary","YouTube/content","commercial","music video"],"experienceLevel":["intermediate","advanced","professional"],"runAndGunFriendly":true,"soloOperatorFriendly":true,"lowLightPerformance":"excellent","photoCapable":true,"photoQuality":"basic","rawVideo":false,"dualSlots":true,"personallyUsed":false,"notablePros":["Excellent low-light performance with clean output up to ISO 51200+","9.44M-dot OLED EVF for precise focus and exposure evaluation","Standard mirrorless form factor supports both photo and video workflows"],"notableCons":["Released 2020. The FX3 offers similar image quality in a cinema body","12.1MP limits print and crop flexibility for stills","No built-in ND filters"],"batteryLife":"good","batteryType":"NP-FZ100","batteryMinutes":95,"batteryPrice":48,"batteryChargeMinutes":150,"cardType":"CFexpress Type A","cardSlots":2,"secondCardType":"SD UHS-II","cardGBPerHour":45,"recommendedCard":"ProGrade Digital CFexpress Type A 160GB","recommendedCardPrice":199,"recommendedCardCapacity":160},
+{"id":"sony-a7cii","name":"Sony A7C II","brand":"Sony","mount":"Sony E","price":2198,"sensorSize":"Full Frame","megapixels":33,"maxVideoResolution":"4K","frameRates":["4K60","4K30","1080p120"],"bitDepth":"8/10-bit","autofocus":"excellent","autofocusDetails":"AI-based Real-time Recognition AF","stabilization":true,"stabilizationDetails":"5-axis IBIS","weightGrams":514,"primaryUseCases":["YouTube/content","wedding","travel","social media","documentary"],"experienceLevel":["beginner","intermediate","advanced"],"runAndGunFriendly":true,"soloOperatorFriendly":true,"lowLightPerformance":"good","photoCapable":true,"photoQuality":"excellent","rawVideo":false,"dualSlots":false,"personallyUsed":false,"notablePros":["514g full-frame body, one of the lightest in its class","33MP sensor with 4K60 10-bit and S-Log3 in a compact form factor","AI-based Real-time Recognition AF tracks humans, animals, birds, insects, cars, and trains"],"notableCons":["No 4K120. Maximum is 4K60","Single SD card slot, no backup recording","Small grip can feel cramped with lenses over 300g"],"batteryLife":"good","batteryType":"NP-FZ100","batteryMinutes":80,"batteryPrice":48,"batteryChargeMinutes":150,"cardType":"SD UHS-II","cardSlots":1,"secondCardType":null,"cardGBPerHour":30,"recommendedCard":"SanDisk Extreme Pro 128GB SD UHS-II","recommendedCardPrice":22,"recommendedCardCapacity":128},
+{"id":"sony-a7iv","name":"Sony A7 IV","brand":"Sony","mount":"Sony E","price":2498,"sensorSize":"Full Frame","megapixels":33,"maxVideoResolution":"4K","frameRates":["4K60","4K30","1080p120"],"bitDepth":"8/10-bit","autofocus":"excellent","autofocusDetails":"Real-time tracking AF","stabilization":true,"stabilizationDetails":"5-axis IBIS","weightGrams":658,"primaryUseCases":["wedding","YouTube/content","commercial","documentary"],"experienceLevel":["intermediate","advanced"],"runAndGunFriendly":true,"soloOperatorFriendly":true,"lowLightPerformance":"good","photoCapable":true,"photoQuality":"excellent","rawVideo":false,"dualSlots":true,"personallyUsed":false,"notablePros":["33MP sensor performs well for both stills and 4K video","Dual card slots (CFexpress Type A + SD) for redundant recording","10-bit 4:2:2 S-Log3 provides wide dynamic range for color grading"],"notableCons":["4K60 applies a 1.5x crop","AF system is a generation behind the A7C II and A7R V","Rolling shutter can be visible with fast panning"],"batteryLife":"good","batteryType":"NP-FZ100","batteryMinutes":100,"batteryPrice":48,"batteryChargeMinutes":150,"cardType":"CFexpress Type A","cardSlots":2,"secondCardType":"SD UHS-II","cardGBPerHour":35,"recommendedCard":"ProGrade Digital CFexpress Type A 160GB","recommendedCardPrice":199,"recommendedCardCapacity":160},
+{"id":"sony-zve10ii","name":"Sony ZV-E10 II","brand":"Sony","mount":"Sony E","price":998,"sensorSize":"APS-C","megapixels":26,"maxVideoResolution":"4K","frameRates":["4K60","4K30","1080p120"],"bitDepth":"8/10-bit","autofocus":"excellent","autofocusDetails":"AI-based AF engine","stabilization":false,"weightGrams":377,"primaryUseCases":["YouTube/content","social media","vlogging"],"experienceLevel":["beginner","intermediate"],"runAndGunFriendly":true,"soloOperatorFriendly":true,"lowLightPerformance":"good","photoCapable":true,"photoQuality":"good","rawVideo":false,"dualSlots":false,"personallyUsed":false,"notablePros":["S-Cinetone, 4K60 10-bit, and AI-based AF for under $1,000","377g body, compact enough for one-handed vlogging","Same AF engine as Sony's flagship cameras at a fraction of the price"],"notableCons":["No in-body stabilization. Requires a gimbal or optically stabilized lens","NP-FW50 battery rated for about 95 minutes of continuous recording","Single SD card slot, no electronic viewfinder"],"batteryLife":"poor","batteryType":"NP-FW50","batteryMinutes":75,"batteryPrice":28,"batteryChargeMinutes":150,"cardType":"SD UHS-II","cardSlots":1,"secondCardType":null,"cardGBPerHour":25,"recommendedCard":"SanDisk Extreme Pro 128GB SD UHS-II","recommendedCardPrice":22,"recommendedCardCapacity":128},
+{"id":"sony-a6700","name":"Sony A6700","brand":"Sony","mount":"Sony E","price":1398,"sensorSize":"APS-C","megapixels":26,"maxVideoResolution":"4K","frameRates":["4K120","4K60","1080p240"],"bitDepth":"8/10-bit","autofocus":"excellent","autofocusDetails":"AI-based Real-time tracking AF","stabilization":true,"stabilizationDetails":"5-axis IBIS","weightGrams":493,"primaryUseCases":["YouTube/content","wedding","documentary","social media","commercial"],"experienceLevel":["beginner","intermediate","advanced"],"runAndGunFriendly":true,"soloOperatorFriendly":true,"lowLightPerformance":"good","photoCapable":true,"photoQuality":"good","rawVideo":false,"dualSlots":false,"personallyUsed":false,"notablePros":["4K120 recording in an APS-C body at $1,398","5-axis IBIS combined with Real-time tracking AF for stabilized handheld shooting","NP-FZ100 battery provides roughly 2x the runtime of the ZV-E10 II"],"notableCons":["Single SD card slot, no redundant recording","1.5x APS-C crop factor reduces effective field of view on wide lenses","Notable rolling shutter artifacts in 4K120 mode"],"batteryLife":"good","batteryType":"NP-FZ100","batteryMinutes":100,"batteryPrice":48,"batteryChargeMinutes":150,"cardType":"SD UHS-II","cardSlots":1,"secondCardType":null,"cardGBPerHour":35,"recommendedCard":"SanDisk Extreme Pro 128GB SD UHS-II","recommendedCardPrice":22,"recommendedCardCapacity":128},
+{"id":"canon-r5ii","name":"Canon EOS R5 Mark II","brand":"Canon","mount":"Canon RF","price":4299,"sensorSize":"Full Frame","megapixels":45,"maxVideoResolution":"8K","frameRates":["8K30","4K120","4K60","1080p240"],"bitDepth":"12-bit (RAW), 10-bit","autofocus":"excellent","autofocusDetails":"Dual Pixel CMOS AF II with eye tracking","stabilization":true,"stabilizationDetails":"5-axis IBIS (up to 8.5 stops)","weightGrams":746,"primaryUseCases":["commercial","wedding","narrative film","documentary","music video","YouTube/content"],"experienceLevel":["advanced","professional"],"runAndGunFriendly":true,"soloOperatorFriendly":true,"lowLightPerformance":"good","photoCapable":true,"photoQuality":"exceptional","rawVideo":true,"dualSlots":true,"personallyUsed":false,"notablePros":["Internal Cinema RAW Light recording at up to 8K30","45MP stacked CMOS sensor for high-resolution stills with minimal rolling shutter","Canon Log 3 with wide dynamic range and well-regarded skin tone rendering"],"notableCons":["Thermal throttling possible in 8K and extended 4K120 recording","Canon RF lenses tend to be more expensive than Sony E or Nikon Z equivalents","Some rolling shutter visible in non-oversampled modes"],"batteryLife":"good","batteryType":"LP-E6NH","batteryMinutes":80,"batteryPrice":60,"batteryChargeMinutes":150,"cardType":"CFexpress Type B","cardSlots":2,"secondCardType":"SD UHS-II","cardGBPerHour":60,"recommendedCard":"ProGrade Digital CFexpress Type B 325GB","recommendedCardPrice":249,"recommendedCardCapacity":325},
+{"id":"canon-r5c","name":"Canon EOS R5 C","brand":"Canon","mount":"Canon RF","price":4499,"sensorSize":"Full Frame","megapixels":45,"maxVideoResolution":"8K","frameRates":["8K60 (RAW)","8K30","4K120","4K60"],"bitDepth":"12-bit RAW, 10-bit","autofocus":"excellent","autofocusDetails":"Dual Pixel CMOS AF II","stabilization":false,"weightGrams":680,"primaryUseCases":["narrative film","commercial","music video","documentary"],"experienceLevel":["advanced","professional"],"runAndGunFriendly":false,"soloOperatorFriendly":false,"lowLightPerformance":"good","photoCapable":true,"photoQuality":"excellent","rawVideo":true,"dualSlots":true,"personallyUsed":false,"notablePros":["Internal 8K60 Cinema RAW Light recording","Active cooling fan enables unlimited continuous recording","Separate cinema and photo modes with independent settings"],"notableCons":["No in-body stabilization. Requires a gimbal or rig for handheld work","Cooling fan noise is audible and can be picked up by on-camera microphones","The R5 Mark II covers most of the same specs in a more versatile body"],"batteryLife":"excellent","batteryType":"LP-E6NH","batteryMinutes":60,"batteryPrice":60,"batteryChargeMinutes":150,"cardType":"CFexpress Type B","cardSlots":2,"secondCardType":"SD UHS-II","cardGBPerHour":90,"recommendedCard":"ProGrade Digital CFexpress Type B 325GB","recommendedCardPrice":249,"recommendedCardCapacity":325},
+{"id":"canon-r6iii","name":"Canon EOS R6 Mark III","brand":"Canon","mount":"Canon RF","price":2799,"sensorSize":"Full Frame","megapixels":32.5,"maxVideoResolution":"7K","frameRates":["7K60 (RAW)","4K120","4K60","1080p180"],"bitDepth":"12-bit RAW, 10-bit","autofocus":"excellent","autofocusDetails":"Dual Pixel CMOS AF II with subject detection","stabilization":true,"stabilizationDetails":"5-axis IBIS (up to 8.5 stops)","weightGrams":699,"primaryUseCases":["wedding","commercial","YouTube/content","documentary","music video"],"experienceLevel":["intermediate","advanced","professional"],"runAndGunFriendly":true,"soloOperatorFriendly":true,"lowLightPerformance":"excellent","photoCapable":true,"photoQuality":"excellent","rawVideo":true,"dualSlots":true,"personallyUsed":false,"notablePros":["Internal 7K60 Cinema RAW Light recording with 4K120 capability","Canon Log 3 with approximately 14 stops of dynamic range","32.5MP full-frame sensor with good high-ISO performance up to ISO 25600+"],"notableCons":["Canon RF mount has limited third-party autofocus lens options","No built-in ND filters","Higher price point than the R6 Mark II it replaces"],"batteryLife":"good","batteryType":"LP-E6P","batteryMinutes":85,"batteryPrice":60,"batteryChargeMinutes":150,"cardType":"CFexpress Type B","cardSlots":2,"secondCardType":"SD UHS-II","cardGBPerHour":65,"recommendedCard":"ProGrade Gold 128GB V90 SD","recommendedCardPrice":110,"recommendedCardCapacity":128},
+{"id":"canon-r7","name":"Canon EOS R7","brand":"Canon","mount":"Canon RF","price":1499,"sensorSize":"APS-C","megapixels":32.5,"maxVideoResolution":"4K","frameRates":["4K60 (crop)","4K30","1080p120"],"bitDepth":"8/10-bit","autofocus":"excellent","autofocusDetails":"Dual Pixel CMOS AF II","stabilization":true,"stabilizationDetails":"5-axis IBIS (up to 7 stops)","weightGrams":612,"primaryUseCases":["documentary","wedding","YouTube/content","social media"],"experienceLevel":["beginner","intermediate","advanced"],"runAndGunFriendly":true,"soloOperatorFriendly":true,"lowLightPerformance":"average","photoCapable":true,"photoQuality":"excellent","rawVideo":false,"dualSlots":true,"personallyUsed":false,"notablePros":["Effective IBIS combined with Dual Pixel CMOS AF II for action and documentary","32.5MP APS-C sensor produces detailed stills alongside 4K video","Entry point into Canon RF ecosystem at $1,499"],"notableCons":["Visible noise above ISO 3200 due to APS-C sensor size","4K60 applies an additional crop beyond the standard 1.6x","Limited selection of native APS-C RF-S lenses"],"batteryLife":"good","batteryType":"LP-E6NH","batteryMinutes":90,"batteryPrice":60,"batteryChargeMinutes":150,"cardType":"SD UHS-II","cardSlots":2,"secondCardType":null,"cardGBPerHour":30,"recommendedCard":"SanDisk Extreme Pro 128GB SD UHS-II","recommendedCardPrice":22,"recommendedCardCapacity":128},
+{"id":"canon-r8","name":"Canon EOS R8","brand":"Canon","mount":"Canon RF","price":1499,"sensorSize":"Full Frame","megapixels":24.2,"maxVideoResolution":"4K","frameRates":["4K60 (crop)","4K30","1080p180"],"bitDepth":"8/10-bit","autofocus":"excellent","autofocusDetails":"Dual Pixel CMOS AF II","stabilization":false,"weightGrams":461,"primaryUseCases":["YouTube/content","social media","vlogging","wedding"],"experienceLevel":["beginner","intermediate"],"runAndGunFriendly":false,"soloOperatorFriendly":true,"lowLightPerformance":"good","photoCapable":true,"photoQuality":"excellent","rawVideo":false,"dualSlots":false,"personallyUsed":false,"notablePros":["Full-frame 24.2MP sensor with Canon Dual Pixel CMOS AF II for under $1,500","461g body, one of the lightest full-frame cameras available","Canon Log 3 and 10-bit 4:2:2 internal recording"],"notableCons":["No in-body image stabilization","Single SD card slot","4K60 applies a significant 1.6x crop"],"batteryLife":"average","batteryType":"LP-E17","batteryMinutes":80,"batteryPrice":45,"batteryChargeMinutes":120,"cardType":"SD UHS-II","cardSlots":1,"secondCardType":null,"cardGBPerHour":30,"recommendedCard":"SanDisk Extreme Pro 128GB SD UHS-II","recommendedCardPrice":22,"recommendedCardCapacity":128},
+{"id":"canon-r50","name":"Canon EOS R50","brand":"Canon","mount":"Canon RF","price":679,"sensorSize":"APS-C","megapixels":24.2,"maxVideoResolution":"4K","frameRates":["4K30 (crop)","1080p120"],"bitDepth":"8-bit","autofocus":"good","autofocusDetails":"Dual Pixel CMOS AF","stabilization":false,"weightGrams":375,"primaryUseCases":["YouTube/content","social media","vlogging"],"experienceLevel":["beginner"],"runAndGunFriendly":false,"soloOperatorFriendly":true,"lowLightPerformance":"average","photoCapable":true,"photoQuality":"good","rawVideo":false,"dualSlots":false,"personallyUsed":false,"notablePros":["Most affordable Canon RF-mount camera at $679","375g compact body with guided menus for new users","4K30 and Dual Pixel CMOS AF at an entry-level price"],"notableCons":["8-bit 4:2:0 only, minimal latitude for color grading","No IBIS and no log color profile","LP-E17 battery provides limited recording time, about 50 min continuous"],"batteryLife":"poor","batteryType":"LP-E17","batteryMinutes":50,"batteryPrice":45,"batteryChargeMinutes":120,"cardType":"SD UHS-II","cardSlots":1,"secondCardType":null,"cardGBPerHour":20,"recommendedCard":"SanDisk Extreme Pro 128GB SD","recommendedCardPrice":22,"recommendedCardCapacity":128},
+{"id":"canon-c70","name":"Canon EOS C70","brand":"Canon","mount":"Canon RF","price":5499,"sensorSize":"Super 35","megapixels":8.85,"maxVideoResolution":"4K","frameRates":["4K120","4K60"],"bitDepth":"10/12-bit RAW","autofocus":"excellent","autofocusDetails":"Dual Pixel CMOS AF II","stabilization":false,"stabilizationDetails":"","weightGrams":1170,"primaryUseCases":["documentary","commercial","wedding","narrative film","music video"],"experienceLevel":["advanced","professional"],"runAndGunFriendly":true,"soloOperatorFriendly":true,"lowLightPerformance":"good","photoCapable":false,"photoQuality":"none","rawVideo":true,"dualSlots":true,"personallyUsed":false,"notablePros":["Built-in ND filters with 2, 4, 6, 8, and 10 stop positions","Dual Gain Output (DGO) sensor provides 16+ stops of dynamic range","Compact cinema body at 1,170g with Dual Pixel CMOS AF II"],"notableCons":["Super 35 sensor only, no full-frame option","Cinema RAW Light added via firmware but limited to lower resolutions","SD card slots only, no CFexpress"],"batteryLife":"excellent","batteryType":"BP-A30","batteryMinutes":120,"batteryPrice":175,"batteryChargeMinutes":180,"cardType":"SD UHS-II","cardSlots":2,"secondCardType":null,"cardGBPerHour":40,"recommendedCard":"ProGrade Gold 128GB V90 SD","recommendedCardPrice":110,"recommendedCardCapacity":128},
+{"id":"canon-c80","name":"Canon EOS C80","brand":"Canon","mount":"Canon RF","price":5999,"sensorSize":"Full Frame","megapixels":45,"maxVideoResolution":"6K","frameRates":["6K30 (RAW)","4K120","4K60"],"bitDepth":"12-bit (RAW), 10-bit","autofocus":"excellent","autofocusDetails":"Dual Pixel CMOS AF II","stabilization":true,"stabilizationDetails":"5-axis IBIS","weightGrams":1060,"primaryUseCases":["commercial","documentary","narrative film","music video","wedding"],"experienceLevel":["advanced","professional"],"runAndGunFriendly":true,"soloOperatorFriendly":true,"lowLightPerformance":"good","photoCapable":false,"photoQuality":"none","rawVideo":true,"dualSlots":true,"personallyUsed":false,"notablePros":["Full-frame Cinema RAW Light internal recording at up to 6K","Built-in ND filters and IBIS in a dedicated cinema body","6K oversampled 4K with Canon Log 3 color science"],"notableCons":["Mini XLR audio inputs only, no full-size XLR","RAW files are very large (requires fast, high-capacity media)","$500 more than the C70 which may suffice for Super 35 workflows"],"batteryLife":"excellent","batteryType":"BP-A30","batteryMinutes":100,"batteryPrice":175,"batteryChargeMinutes":180,"cardType":"CFexpress Type B","cardSlots":2,"secondCardType":"SD UHS-II","cardGBPerHour":70,"recommendedCard":"ProGrade Digital CFexpress Type B 325GB","recommendedCardPrice":249,"recommendedCardCapacity":325},
+{"id":"panasonic-s5iix","name":"Panasonic Lumix S5 IIX","brand":"Panasonic","mount":"Leica L","price":2199,"sensorSize":"Full Frame","megapixels":24.2,"maxVideoResolution":"6K","frameRates":["6K30","4K120","4K60","1080p180"],"bitDepth":"8/10-bit","autofocus":"good","autofocusDetails":"Phase-detect AF with subject detection","stabilization":true,"stabilizationDetails":"5-axis IBIS + Dual I.S. 2","weightGrams":740,"primaryUseCases":["commercial","documentary","wedding","YouTube/content","music video","narrative film"],"experienceLevel":["intermediate","advanced","professional"],"runAndGunFriendly":true,"soloOperatorFriendly":true,"lowLightPerformance":"good","photoCapable":true,"photoQuality":"excellent","rawVideo":true,"dualSlots":true,"personallyUsed":false,"notablePros":["Internal Apple ProRes recording, uncommon at this price","Dual native ISO at 640/4000 for flexible exposure in mixed lighting","6K open-gate recording for reframing flexibility in post"],"notableCons":["Phase-detect AF is less reliable than Sony or Canon equivalents","L-mount lens selection is smaller than E or RF mount","SD card slots only, no CFexpress"],"batteryLife":"good","batteryType":"DMW-BLK22","batteryMinutes":90,"batteryPrice":68,"batteryChargeMinutes":180,"cardType":"SD UHS-II","cardSlots":2,"secondCardType":null,"cardGBPerHour":50,"recommendedCard":"ProGrade Gold 128GB V90 SD","recommendedCardPrice":110,"recommendedCardCapacity":128},
+{"id":"panasonic-s5ii","name":"Panasonic Lumix S5 II","brand":"Panasonic","mount":"Leica L","price":1999,"sensorSize":"Full Frame","megapixels":24.2,"maxVideoResolution":"6K","frameRates":["6K30","4K60","1080p180"],"bitDepth":"8/10-bit","autofocus":"good","autofocusDetails":"Phase-detect AF","stabilization":true,"stabilizationDetails":"5-axis IBIS (6.5 stops)","weightGrams":740,"primaryUseCases":["wedding","YouTube/content","documentary","commercial"],"experienceLevel":["intermediate","advanced"],"runAndGunFriendly":true,"soloOperatorFriendly":true,"lowLightPerformance":"good","photoCapable":true,"photoQuality":"excellent","rawVideo":false,"dualSlots":true,"personallyUsed":false,"notablePros":["Full-frame sensor with phase-detect AF for under $2,000","Dual native ISO (640/4000) with V-Log for wide dynamic range grading","Effective 5-axis IBIS rated for up to 6.5 stops of compensation"],"notableCons":["No 4K120 recording","No internal ProRes recording (available on S5 IIX)","AF can hunt in low-contrast or backlit situations"],"batteryLife":"good","batteryType":"DMW-BLK22","batteryMinutes":90,"batteryPrice":68,"batteryChargeMinutes":180,"cardType":"SD UHS-II","cardSlots":2,"secondCardType":null,"cardGBPerHour":35,"recommendedCard":"SanDisk Extreme Pro 128GB SD UHS-II","recommendedCardPrice":22,"recommendedCardCapacity":128},
+{"id":"panasonic-gh7","name":"Panasonic Lumix GH7","brand":"Panasonic","mount":"Micro Four Thirds","price":2199,"sensorSize":"Micro Four Thirds","megapixels":25.2,"maxVideoResolution":"5.7K","frameRates":["5.7K30","4K120","4K60","1080p240"],"bitDepth":"10/12-bit RAW","autofocus":"good","autofocusDetails":"Phase-detect AF","stabilization":true,"stabilizationDetails":"5-axis IBIS","weightGrams":805,"primaryUseCases":["documentary","commercial","YouTube/content","music video","narrative film"],"experienceLevel":["intermediate","advanced","professional"],"runAndGunFriendly":true,"soloOperatorFriendly":true,"lowLightPerformance":"average","photoCapable":true,"photoQuality":"good","rawVideo":true,"dualSlots":true,"personallyUsed":false,"notablePros":["Internal Apple ProRes and ProRes RAW recording at $2,199","4K120 with 5-axis IBIS for stabilized slow-motion handheld shots","CFexpress Type B card slot for high-bitrate recording"],"notableCons":["Micro Four Thirds sensor has limited low-light performance and shallower depth of field","2x crop factor significantly narrows field of view","805g, heavy for a Micro Four Thirds body"],"batteryLife":"good","batteryType":"DMW-BLK22","batteryMinutes":80,"batteryPrice":68,"batteryChargeMinutes":180,"cardType":"CFexpress Type B","cardSlots":2,"secondCardType":"SD UHS-II","cardGBPerHour":60,"recommendedCard":"ProGrade Digital CFexpress Type B 325GB","recommendedCardPrice":249,"recommendedCardCapacity":325},
+{"id":"panasonic-gh6","name":"Panasonic Lumix GH6","brand":"Panasonic","mount":"Micro Four Thirds","price":1499,"sensorSize":"Micro Four Thirds","megapixels":25.2,"maxVideoResolution":"5.7K","frameRates":["5.7K60","4K120","4K60","1080p240"],"bitDepth":"8/10-bit","autofocus":"basic","autofocusDetails":"Contrast-detect AF","stabilization":true,"stabilizationDetails":"5-axis IBIS","weightGrams":739,"primaryUseCases":["YouTube/content","documentary","commercial","music video"],"experienceLevel":["intermediate","advanced"],"runAndGunFriendly":true,"soloOperatorFriendly":false,"lowLightPerformance":"average","photoCapable":true,"photoQuality":"good","rawVideo":false,"dualSlots":true,"personallyUsed":false,"notablePros":["5.7K60 and 4K120 recording at $1,499","Internal ProRes and ProRes HQ recording","Active cooling enables unlimited continuous recording"],"notableCons":["Contrast-detect AF only, no phase detection","Micro Four Thirds sensor with 2x crop and limited high-ISO performance","The newer GH7 adds phase-detect AF for $700 more"],"batteryLife":"good","batteryType":"DMW-BLK22","batteryMinutes":80,"batteryPrice":68,"batteryChargeMinutes":180,"cardType":"CFexpress Type B","cardSlots":2,"secondCardType":"SD UHS-II","cardGBPerHour":50,"recommendedCard":"ProGrade Digital CFexpress Type B 325GB","recommendedCardPrice":249,"recommendedCardCapacity":325},
+{"id":"panasonic-g9ii","name":"Panasonic Lumix G9 II","brand":"Panasonic","mount":"Micro Four Thirds","price":1799,"sensorSize":"Micro Four Thirds","megapixels":25.2,"maxVideoResolution":"5.7K","frameRates":["5.7K30","4K120","4K60","1080p240"],"bitDepth":"8/10-bit","autofocus":"good","autofocusDetails":"Phase-detect AF","stabilization":true,"stabilizationDetails":"5-axis IBIS + Dual I.S. 2 (8 stops)","weightGrams":658,"primaryUseCases":["documentary","YouTube/content","wedding","commercial"],"experienceLevel":["intermediate","advanced"],"runAndGunFriendly":true,"soloOperatorFriendly":true,"lowLightPerformance":"average","photoCapable":true,"photoQuality":"excellent","rawVideo":false,"dualSlots":true,"personallyUsed":false,"notablePros":["Phase-detect AF in a Micro Four Thirds body","5-axis IBIS with Dual I.S. 2 support for up to 8 stops of compensation","100fps burst shooting with 25MP resolution for action photography"],"notableCons":["No internal ProRes recording","MFT sensor limits high-ISO performance compared to APS-C and full frame","SD card slots only"],"batteryLife":"good","batteryType":"DMW-BLK22","batteryMinutes":80,"batteryPrice":68,"batteryChargeMinutes":180,"cardType":"SD UHS-II","cardSlots":2,"secondCardType":null,"cardGBPerHour":35,"recommendedCard":"SanDisk Extreme Pro 128GB SD UHS-II","recommendedCardPrice":22,"recommendedCardCapacity":128},
+{"id":"blackmagic-pocket4k","name":"Blackmagic Pocket Cinema Camera 4K","brand":"Blackmagic","mount":"Micro Four Thirds","price":1295,"sensorSize":"Micro Four Thirds","megapixels":8.8,"maxVideoResolution":"4K DCI","frameRates":["4K DCI 60","4K30","1080p120"],"bitDepth":"12-bit RAW","autofocus":"manual only","stabilization":false,"weightGrams":722,"primaryUseCases":["narrative film","music video","short film","documentary"],"experienceLevel":["intermediate","advanced","professional"],"runAndGunFriendly":false,"soloOperatorFriendly":false,"lowLightPerformance":"poor","photoCapable":false,"photoQuality":"none","rawVideo":true,"dualSlots":true,"personallyUsed":false,"notablePros":["Internal 12-bit Blackmagic RAW recording at $1,295","5-inch 1080p touchscreen with on-screen tools (focus peaking, false color, waveforms)","DaVinci Resolve Studio license included ($295 value)"],"notableCons":["No autofocus, manual focus only","LP-E6 battery lasts approximately 45-60 minutes of continuous recording","No in-body stabilization"],"batteryLife":"poor","batteryType":"LP-E6","batteryMinutes":60,"batteryPrice":30,"batteryChargeMinutes":120,"cardType":"CFast 2.0","cardSlots":2,"secondCardType":"SD UHS-II","cardGBPerHour":80,"recommendedCard":"SanDisk Extreme Pro CFast 2.0 256GB","recommendedCardPrice":199,"recommendedCardCapacity":256},
+{"id":"blackmagic-pocket6kg2","name":"Blackmagic Pocket Cinema Camera 6K G2","brand":"Blackmagic","mount":"Canon EF","price":1995,"sensorSize":"Super 35","megapixels":21.2,"maxVideoResolution":"6K","frameRates":["6K50","4K60","2.8K120"],"bitDepth":"12-bit RAW","autofocus":"manual only","stabilization":false,"weightGrams":900,"primaryUseCases":["narrative film","music video","commercial","documentary","short film"],"experienceLevel":["intermediate","advanced","professional"],"runAndGunFriendly":false,"soloOperatorFriendly":false,"lowLightPerformance":"average","photoCapable":false,"photoQuality":"none","rawVideo":true,"dualSlots":true,"personallyUsed":false,"notablePros":["Internal 6K Blackmagic RAW recording for under $2,000","Canon EF mount provides access to decades of cinema and photo lenses","13 stops of measured dynamic range"],"notableCons":["Canon EF mount with no electronic autofocus support, manual focus only","LP-E6 battery provides approximately 45-60 minutes of recording","No in-body stabilization or autofocus system"],"batteryLife":"poor","batteryType":"LP-E6","batteryMinutes":60,"batteryPrice":30,"batteryChargeMinutes":120,"cardType":"CFast 2.0","cardSlots":2,"secondCardType":"SD UHS-II","cardGBPerHour":100,"recommendedCard":"SanDisk Extreme Pro CFast 2.0 256GB","recommendedCardPrice":199,"recommendedCardCapacity":256},
+{"id":"blackmagic-cc6k","name":"Blackmagic Cinema Camera 6K","brand":"Blackmagic","mount":"Leica L","price":2595,"sensorSize":"Full Frame","megapixels":24.6,"maxVideoResolution":"6K","frameRates":["6K36","4K60","2K120"],"bitDepth":"12-bit RAW","autofocus":"basic","autofocusDetails":"Basic phase-detect AF","stabilization":false,"weightGrams":900,"primaryUseCases":["narrative film","commercial","music video","documentary"],"experienceLevel":["intermediate","advanced","professional"],"runAndGunFriendly":false,"soloOperatorFriendly":false,"lowLightPerformance":"good","photoCapable":false,"photoQuality":"none","rawVideo":true,"dualSlots":true,"personallyUsed":false,"notablePros":["Full-frame 6K Blackmagic RAW internal recording at $2,595","First Blackmagic camera with phase-detect autofocus","L-mount provides access to Sigma, Panasonic, and Leica lenses"],"notableCons":["AF is functional but significantly less reliable than Sony or Canon systems","No in-body image stabilization","NP-F570 battery provides limited recording time"],"batteryLife":"poor","batteryType":"NP-F570","batteryMinutes":45,"batteryPrice":25,"batteryChargeMinutes":120,"cardType":"CFexpress Type B","cardSlots":2,"secondCardType":"SD UHS-II","cardGBPerHour":90,"recommendedCard":"ProGrade Digital CFexpress Type B 325GB","recommendedCardPrice":249,"recommendedCardCapacity":325},
+{"id":"blackmagic-pyxis","name":"Blackmagic PYXIS 6K","brand":"Blackmagic","mount":"Leica L","price":2595,"sensorSize":"Full Frame","megapixels":24.6,"maxVideoResolution":"6K","frameRates":["6K36","4K60","2K120"],"bitDepth":"12-bit RAW","autofocus":"basic","autofocusDetails":"Basic phase-detect AF","stabilization":false,"weightGrams":980,"primaryUseCases":["narrative film","commercial","music video","studio","multicam"],"experienceLevel":["advanced","professional"],"runAndGunFriendly":false,"soloOperatorFriendly":false,"lowLightPerformance":"good","photoCapable":false,"photoQuality":"none","rawVideo":true,"dualSlots":true,"personallyUsed":false,"notablePros":["Full-size XLR audio inputs with phantom power","Box-style body designed for rigging, studio, and multi-camera setups","Same full-frame 6K Blackmagic RAW as the Cinema Camera 6K"],"notableCons":["No built-in screen. Requires an external monitor","Not practical for handheld or run-and-gun shooting","Same basic AF limitations as other Blackmagic cameras"],"batteryLife":"average","batteryType":"NP-F570","batteryMinutes":45,"batteryPrice":25,"batteryChargeMinutes":120,"cardType":"CFexpress Type B","cardSlots":2,"secondCardType":"SD UHS-II","cardGBPerHour":90,"recommendedCard":"ProGrade Digital CFexpress Type B 325GB","recommendedCardPrice":249,"recommendedCardCapacity":325},
+{"id":"fujifilm-xh2s","name":"Fujifilm X-H2S","brand":"Fujifilm","mount":"Fujifilm X","price":2499,"sensorSize":"APS-C","megapixels":26.1,"maxVideoResolution":"6.2K","frameRates":["6.2K30","4K120","4K60","1080p240"],"bitDepth":"8/10-bit","autofocus":"good","autofocusDetails":"Phase-detect AF with subject detection","stabilization":true,"stabilizationDetails":"5-axis IBIS (up to 7 stops)","weightGrams":660,"primaryUseCases":["commercial","documentary","YouTube/content","music video","wedding"],"experienceLevel":["intermediate","advanced","professional"],"runAndGunFriendly":true,"soloOperatorFriendly":true,"lowLightPerformance":"good","photoCapable":true,"photoQuality":"excellent","rawVideo":true,"dualSlots":true,"personallyUsed":false,"notablePros":["Internal Apple ProRes recording with 4K120 capability","19 built-in Film Simulation modes including Eterna for cinema work","Stacked BSI CMOS sensor provides fast readout with minimal rolling shutter"],"notableCons":["APS-C sensor has higher noise at high ISO compared to full-frame cameras","Fujifilm X-mount has fewer cinema-oriented lens options than Sony E or Canon RF","Thermal throttling possible during extended high-frame-rate recording"],"batteryLife":"average","batteryType":"NP-W235","batteryMinutes":80,"batteryPrice":65,"batteryChargeMinutes":160,"cardType":"CFexpress Type B","cardSlots":2,"secondCardType":"SD UHS-II","cardGBPerHour":50,"recommendedCard":"ProGrade Digital CFexpress Type B 325GB","recommendedCardPrice":249,"recommendedCardCapacity":325},
+{"id":"fujifilm-xh2","name":"Fujifilm X-H2","brand":"Fujifilm","mount":"Fujifilm X","price":1999,"sensorSize":"APS-C","megapixels":40.2,"maxVideoResolution":"8K","frameRates":["8K30","4K60","1080p240"],"bitDepth":"8/10-bit","autofocus":"good","autofocusDetails":"Phase-detect AF with subject detection","stabilization":true,"stabilizationDetails":"5-axis IBIS (up to 7 stops)","weightGrams":660,"primaryUseCases":["commercial","YouTube/content","documentary"],"experienceLevel":["intermediate","advanced"],"runAndGunFriendly":true,"soloOperatorFriendly":true,"lowLightPerformance":"average","photoCapable":true,"photoQuality":"exceptional","rawVideo":true,"dualSlots":true,"personallyUsed":false,"notablePros":["Internal 8K30 recording from a 40.2MP APS-C sensor","40.2MP stills with Fujifilm Film Simulation color profiles","Internal Apple ProRes recording"],"notableCons":["No 4K120 recording","40.2MP on APS-C produces visible noise above ISO 3200","8K files require fast storage and a powerful editing system"],"batteryLife":"average","batteryType":"NP-W235","batteryMinutes":80,"batteryPrice":65,"batteryChargeMinutes":160,"cardType":"CFexpress Type B","cardSlots":2,"secondCardType":"SD UHS-II","cardGBPerHour":55,"recommendedCard":"ProGrade Digital CFexpress Type B 325GB","recommendedCardPrice":249,"recommendedCardCapacity":325},
+{"id":"fujifilm-xt5","name":"Fujifilm X-T5","brand":"Fujifilm","mount":"Fujifilm X","price":1699,"sensorSize":"APS-C","megapixels":40.2,"maxVideoResolution":"6.2K","frameRates":["6.2K30","4K60","1080p240"],"bitDepth":"8/10-bit","autofocus":"good","autofocusDetails":"Phase-detect AF","stabilization":true,"stabilizationDetails":"5-axis IBIS (up to 7 stops)","weightGrams":557,"primaryUseCases":["YouTube/content","documentary","social media"],"experienceLevel":["beginner","intermediate","advanced"],"runAndGunFriendly":true,"soloOperatorFriendly":true,"lowLightPerformance":"average","photoCapable":true,"photoQuality":"exceptional","rawVideo":false,"dualSlots":true,"personallyUsed":false,"notablePros":["Dedicated shutter speed and ISO dials with a classic rangefinder body design","40.2MP sensor with 19 Film Simulation modes for distinctive color rendering","6.2K30 and 4K60 10-bit internal recording"],"notableCons":["Three-way tilt screen does not flip out for front-facing vlogging","No internal ProRes recording","Designed primarily for photography. Video features are secondary"],"batteryLife":"average","batteryType":"NP-W235","batteryMinutes":70,"batteryPrice":65,"batteryChargeMinutes":160,"cardType":"SD UHS-II","cardSlots":2,"secondCardType":null,"cardGBPerHour":35,"recommendedCard":"SanDisk Extreme Pro 128GB SD UHS-II","recommendedCardPrice":22,"recommendedCardCapacity":128},
+{"id":"fujifilm-xs20","name":"Fujifilm X-S20","brand":"Fujifilm","mount":"Fujifilm X","price":1299,"sensorSize":"APS-C","megapixels":26.1,"maxVideoResolution":"6.2K","frameRates":["6.2K30","4K60","1080p240"],"bitDepth":"8/10-bit","autofocus":"good","autofocusDetails":"Phase-detect AF","stabilization":true,"stabilizationDetails":"5-axis IBIS (up to 7 stops)","weightGrams":491,"primaryUseCases":["YouTube/content","social media","vlogging","documentary"],"experienceLevel":["beginner","intermediate"],"runAndGunFriendly":true,"soloOperatorFriendly":true,"lowLightPerformance":"good","photoCapable":true,"photoQuality":"excellent","rawVideo":false,"dualSlots":false,"personallyUsed":false,"notablePros":["6.2K30 and 4K60 10-bit recording at $1,299","19 Film Simulation modes built in, including Eterna and Classic Neg","491g body with 5-axis IBIS providing up to 7 stops of compensation"],"notableCons":["Single SD card slot, no backup recording","No internal ProRes recording","Limited first-party content creator accessories compared to Sony ZV line"],"batteryLife":"good","batteryType":"NP-W235","batteryMinutes":70,"batteryPrice":65,"batteryChargeMinutes":160,"cardType":"SD UHS-II","cardSlots":1,"secondCardType":null,"cardGBPerHour":35,"recommendedCard":"SanDisk Extreme Pro 128GB SD UHS-II","recommendedCardPrice":22,"recommendedCardCapacity":128},
+{"id":"nikon-z6iii","name":"Nikon Z6 III","brand":"Nikon","mount":"Nikon Z","price":2499,"sensorSize":"Full Frame","megapixels":24.5,"maxVideoResolution":"6K","frameRates":["6K30","4K120","4K60","1080p240"],"bitDepth":"12-bit RAW, 10-bit","autofocus":"excellent","autofocusDetails":"3D tracking AF with subject detection","stabilization":true,"stabilizationDetails":"5-axis IBIS","weightGrams":760,"primaryUseCases":["wedding","documentary","commercial","YouTube/content","music video"],"experienceLevel":["intermediate","advanced","professional"],"runAndGunFriendly":true,"soloOperatorFriendly":true,"lowLightPerformance":"excellent","photoCapable":true,"photoQuality":"excellent","rawVideo":true,"dualSlots":true,"personallyUsed":false,"notablePros":["Internal N-RAW recording with 4K120 capability at $2,499","Partially stacked CMOS sensor provides fast readout with minimal rolling shutter","Nikon's improved 3D tracking AF with subject detection for people, animals, and vehicles"],"notableCons":["Nikon Z lens ecosystem has fewer third-party options than Sony E mount","Requires proprietary microSD-form CFexpress cards","N-Log color workflow is less widely supported in post-production software"],"batteryLife":"good","batteryType":"EN-EL15c","batteryMinutes":90,"batteryPrice":52,"batteryChargeMinutes":150,"cardType":"microSD CFexpress","cardSlots":2,"secondCardType":"SD UHS-II","cardGBPerHour":45,"recommendedCard":"Nikon microSD CFexpress 256GB","recommendedCardPrice":200,"recommendedCardCapacity":256},
+{"id":"nikon-z8","name":"Nikon Z8","brand":"Nikon","mount":"Nikon Z","price":3996,"sensorSize":"Full Frame","megapixels":45.7,"maxVideoResolution":"8K","frameRates":["8K30","4K120","4K60","1080p240"],"bitDepth":"12-bit RAW, 10-bit","autofocus":"excellent","autofocusDetails":"3D tracking AF with subject detection","stabilization":true,"stabilizationDetails":"5-axis IBIS (up to 6 stops)","weightGrams":910,"primaryUseCases":["commercial","documentary","narrative film","wedding","music video"],"experienceLevel":["advanced","professional"],"runAndGunFriendly":true,"soloOperatorFriendly":true,"lowLightPerformance":"good","photoCapable":true,"photoQuality":"exceptional","rawVideo":true,"dualSlots":true,"personallyUsed":false,"notablePros":["Internal 8K N-RAW recording with the same stacked sensor as the Z9","45.7MP stacked CMOS sensor with fast readout and no blackout during burst shooting","Subject-detection AF tracking for people, animals, and vehicles"],"notableCons":["Tilt-only screen, no vari-angle for front-facing recording","45.7MP generates large files and may be more resolution than needed for 4K delivery","Thermal throttling possible during extended 8K recording sessions"],"batteryLife":"good","batteryType":"EN-EL15c","batteryMinutes":80,"batteryPrice":52,"batteryChargeMinutes":150,"cardType":"CFexpress Type B","cardSlots":2,"secondCardType":"SD UHS-II","cardGBPerHour":70,"recommendedCard":"ProGrade Digital CFexpress Type B 325GB","recommendedCardPrice":249,"recommendedCardCapacity":325},
+{"id":"nikon-z50ii","name":"Nikon Z50 II","brand":"Nikon","mount":"Nikon Z","price":1099,"sensorSize":"APS-C (DX)","megapixels":20.9,"maxVideoResolution":"4K","frameRates":["4K60","4K30","1080p120"],"bitDepth":"8/10-bit","autofocus":"good","autofocusDetails":"Hybrid AF with subject detection","stabilization":false,"weightGrams":550,"primaryUseCases":["YouTube/content","social media","vlogging"],"experienceLevel":["beginner","intermediate"],"runAndGunFriendly":false,"soloOperatorFriendly":true,"lowLightPerformance":"average","photoCapable":true,"photoQuality":"good","rawVideo":false,"dualSlots":false,"personallyUsed":false,"notablePros":["4K60 with N-Log recording in a Nikon Z body for $1,099","Improved hybrid AF system with subject detection","Compact 550g body suitable for travel and vlogging"],"notableCons":["No in-body image stabilization","Limited native DX (APS-C) Nikon Z lens selection","Single SD card slot"],"batteryLife":"average","batteryType":"EN-EL25a","batteryMinutes":65,"batteryPrice":42,"batteryChargeMinutes":120,"cardType":"SD UHS-II","cardSlots":1,"secondCardType":null,"cardGBPerHour":25,"recommendedCard":"SanDisk Extreme Pro 128GB SD UHS-II","recommendedCardPrice":22,"recommendedCardCapacity":128},
+{"id":"dji-osmo-pocket3","name":"DJI Osmo Pocket 3","brand":"DJI","mount":"Fixed lens","price":519,"sensorSize":"1 inch","megapixels":20,"maxVideoResolution":"4K","frameRates":["4K120","4K60","1080p240"],"bitDepth":"8/10-bit","autofocus":"good","autofocusDetails":"Phase-detect AF","stabilization":true,"stabilizationDetails":"3-axis mechanical gimbal","weightGrams":179,"primaryUseCases":["social media","vlogging","YouTube/content","BTS","travel"],"experienceLevel":["beginner","intermediate"],"runAndGunFriendly":true,"soloOperatorFriendly":true,"lowLightPerformance":"good","photoCapable":true,"photoQuality":"good","rawVideo":false,"dualSlots":false,"personallyUsed":false,"notablePros":["Built-in 3-axis mechanical gimbal stabilization in a 179g pocket-sized body","1-inch CMOS sensor, larger than most action cameras and smartphones","4K120 and 10-bit D-Log M recording"],"notableCons":["Fixed 20mm equivalent lens, no interchangeable optics","1-inch sensor cannot match APS-C or full-frame depth of field and low-light performance","Gimbal mechanism is delicate and can be damaged by impacts"],"batteryLife":"average","batteryType":"Built-in","batteryMinutes":120,"batteryPrice":0,"batteryChargeMinutes":90,"cardType":"microSD","cardSlots":1,"secondCardType":null,"cardGBPerHour":20,"recommendedCard":"SanDisk Extreme Pro microSD 256GB","recommendedCardPrice":28,"recommendedCardCapacity":256},
+{"id":"gopro-hero13","name":"GoPro HERO13 Black","brand":"GoPro","mount":"Fixed lens","price":399,"sensorSize":"1/1.9 inch","megapixels":27,"maxVideoResolution":"5.3K","frameRates":["5.3K30","4K120","4K60","2.7K240"],"bitDepth":"8/10-bit","autofocus":"good","autofocusDetails":"Fixed focus","stabilization":true,"stabilizationDetails":"HyperSmooth 6.0 EIS","weightGrams":154,"primaryUseCases":["action/sports","social media","vlogging","BTS","travel"],"experienceLevel":["beginner","intermediate"],"runAndGunFriendly":true,"soloOperatorFriendly":true,"lowLightPerformance":"poor","photoCapable":true,"photoQuality":"average","rawVideo":false,"dualSlots":false,"personallyUsed":false,"notablePros":["HyperSmooth 6.0 electronic stabilization with horizon lock up to 360 degrees","Waterproof to 33ft (10m) without a housing","Magnetic latch mounting system for quick attachment and removal"],"notableCons":["1/1.9-inch sensor produces visible noise in low light","Heavy H.265 compression can limit grading flexibility","Battery life is approximately 60-80 minutes of continuous 4K recording"],"batteryLife":"poor","batteryType":"Built-in (replaceable)","batteryMinutes":70,"batteryPrice":20,"batteryChargeMinutes":60,"cardType":"microSD","cardSlots":1,"secondCardType":null,"cardGBPerHour":25,"recommendedCard":"SanDisk Extreme Pro microSD 256GB","recommendedCardPrice":28,"recommendedCardCapacity":256},
+{"id":"red-komodo","name":"RED KOMODO 6K","brand":"RED","mount":"Canon RF","price":5995,"sensorSize":"Super 35","megapixels":19.9,"maxVideoResolution":"6K","frameRates":["6K40","4K60","2K120"],"bitDepth":"16-bit RAW","autofocus":"manual only","stabilization":false,"weightGrams":1010,"primaryUseCases":["narrative film","commercial","music video"],"experienceLevel":["professional"],"runAndGunFriendly":false,"soloOperatorFriendly":false,"lowLightPerformance":"average","photoCapable":false,"photoQuality":"none","rawVideo":true,"dualSlots":false,"personallyUsed":false,"notablePros":["16-bit REDCODE RAW recording, the same codec used on major film productions","Canon RF mount provides access to both cinema and photo lenses","Relatively compact cinema body at 1,010g for a RED camera"],"notableCons":["$5,995 is body only. A production-ready rig typically costs $10,000+","No built-in monitor, audio inputs, or autofocus","REDCODE RAW files require a high-performance editing workstation"],"batteryLife":"average","batteryType":"RED Brick","batteryMinutes":60,"batteryPrice":250,"batteryChargeMinutes":180,"cardType":"CFast 2.0","cardSlots":1,"secondCardType":"RED Mini-Mag","cardGBPerHour":150,"recommendedCard":"RED PRO CFast 2.0 512GB","recommendedCardPrice":495,"recommendedCardCapacity":512}
+],
+lenses: {
+"Sony E":{budget:[{name:"Tamron 17-28mm f/2.8 Di III RXD",price:799,detail:"17-28mm f/2.8",personallyUsed:false},{name:"Tamron 28-75mm f/2.8 Di III VXD G2",price:799,detail:"28-75mm f/2.8",personallyUsed:false},{name:"Sony FE 85mm f/1.8",price:598,detail:"85mm f/1.8",personallyUsed:false}],mid:[{name:"Sony FE 20mm f/1.8 G",price:898,detail:"20mm f/1.8",personallyUsed:false},{name:"Sony FE 24-70mm f/2.8 GM II",price:2298,detail:"24-70mm f/2.8",personallyUsed:false},{name:"Sigma 35mm f/1.4 DG DN Art",price:899,detail:"35mm f/1.4",personallyUsed:false}],premium:[{name:"Sony FE 16-35mm f/2.8 GM II",price:2298,detail:"16-35mm f/2.8",personallyUsed:false},{name:"Sony FE 24-70mm f/2.8 GM II",price:2298,detail:"24-70mm f/2.8",personallyUsed:false},{name:"Sony FE 70-200mm f/2.8 GM OSS II",price:2798,detail:"70-200mm f/2.8",personallyUsed:false}],apsc:[{name:"Sigma 18-50mm f/2.8 DC DN",price:449,detail:"18-50mm f/2.8",personallyUsed:false},{name:"Sony E 15mm f/1.4 G",price:748,detail:"15mm f/1.4",personallyUsed:false},{name:"Sigma 56mm f/1.4 DC DN",price:449,detail:"56mm f/1.4",personallyUsed:false}]},
+"Canon RF":{budget:[{name:"Canon RF 50mm f/1.8 STM",price:199,detail:"50mm f/1.8",personallyUsed:false},{name:"Canon RF 24-105mm f/4-7.1 IS STM",price:399,detail:"24-105mm f/4-7.1",personallyUsed:false},{name:"Canon RF 16mm f/2.8 STM",price:299,detail:"16mm f/2.8",personallyUsed:false}],mid:[{name:"Canon RF 24-70mm f/2.8 L IS USM",price:2399,detail:"24-70mm f/2.8 L",personallyUsed:false},{name:"Canon RF 35mm f/1.4 L VCM",price:1499,detail:"35mm f/1.4 L",personallyUsed:false},{name:"Canon RF 15-35mm f/2.8 L IS USM",price:2399,detail:"15-35mm f/2.8 L",personallyUsed:false}],premium:[{name:"Canon RF 24-70mm f/2.8 L IS USM",price:2399,detail:"24-70mm f/2.8 L",personallyUsed:false},{name:"Canon RF 70-200mm f/2.8 L IS USM",price:2799,detail:"70-200mm f/2.8 L",personallyUsed:false},{name:"Canon RF 85mm f/1.2 L USM",price:2699,detail:"85mm f/1.2 L",personallyUsed:false}]},
+"Leica L":{budget:[{name:"Sigma 28-70mm f/2.8 DG DN",price:799,detail:"28-70mm f/2.8",personallyUsed:false},{name:"Sigma 24mm f/2 DG DN",price:449,detail:"24mm f/2",personallyUsed:false},{name:"Sigma 85mm f/1.4 DG DN Art",price:1099,detail:"85mm f/1.4",personallyUsed:false}],mid:[{name:"Panasonic Lumix S 20-60mm f/3.5-5.6",price:497,detail:"20-60mm f/3.5-5.6",personallyUsed:false},{name:"Sigma 24-70mm f/2.8 DG DN Art",price:1099,detail:"24-70mm f/2.8",personallyUsed:false},{name:"Panasonic Lumix S 85mm f/1.8",price:597,detail:"85mm f/1.8",personallyUsed:false}],premium:[{name:"Sigma 14-24mm f/2.8 DG DN Art",price:1399,detail:"14-24mm f/2.8",personallyUsed:false},{name:"Sigma 24-70mm f/2.8 DG DN Art",price:1099,detail:"24-70mm f/2.8",personallyUsed:false},{name:"Sigma 70-200mm f/2.8 DG DN OS Sports",price:1499,detail:"70-200mm f/2.8",personallyUsed:false}]},
+"Micro Four Thirds":{budget:[{name:"Panasonic Lumix G 25mm f/1.7",price:147,detail:"25mm f/1.7",personallyUsed:false},{name:"Olympus 12-40mm f/2.8 PRO II",price:799,detail:"12-40mm f/2.8",personallyUsed:false},{name:"Sigma 16mm f/1.4 DC DN",price:369,detail:"16mm f/1.4",personallyUsed:false}],mid:[{name:"Panasonic Leica 8-18mm f/2.8-4",price:899,detail:"8-18mm f/2.8-4",personallyUsed:false},{name:"Panasonic Leica Nocticron 42.5mm f/1.2",price:1297,detail:"42.5mm f/1.2",personallyUsed:false},{name:"Panasonic G X Vario 12-35mm f/2.8 II",price:697,detail:"12-35mm f/2.8",personallyUsed:false}],premium:[{name:"Voigtlander Nokton 10.5mm f/0.95",price:999,detail:"10.5mm f/0.95",personallyUsed:false},{name:"Voigtlander Nokton 25mm f/0.95 II",price:799,detail:"25mm f/0.95",personallyUsed:false},{name:"SLR Magic MicroPrime Cine Set",price:1899,detail:"12/25/50mm T1.3",personallyUsed:false}]},
+"Fujifilm X":{budget:[{name:"Fujifilm XF 35mm f/2 R WR",price:399,detail:"35mm f/2",personallyUsed:false},{name:"Sigma 18-50mm f/2.8 DC DN",price:449,detail:"18-50mm f/2.8",personallyUsed:false},{name:"Fujifilm XF 16mm f/2.8 R WR",price:399,detail:"16mm f/2.8",personallyUsed:false}],mid:[{name:"Fujifilm XF 16-55mm f/2.8 R LM WR",price:1199,detail:"16-55mm f/2.8",personallyUsed:false},{name:"Fujifilm XF 56mm f/1.2 R WR",price:999,detail:"56mm f/1.2",personallyUsed:false},{name:"Fujifilm XF 18mm f/1.4 R LM WR",price:949,detail:"18mm f/1.4",personallyUsed:false}],premium:[{name:"Fujifilm XF 8-16mm f/2.8 R LM WR",price:1999,detail:"8-16mm f/2.8",personallyUsed:false},{name:"Fujifilm XF 50-140mm f/2.8 R LM OIS WR",price:1599,detail:"50-140mm f/2.8",personallyUsed:false},{name:"Fujifilm XF 33mm f/1.4 R LM WR",price:799,detail:"33mm f/1.4",personallyUsed:false}]},
+"Nikon Z":{budget:[{name:"Nikon Z 50mm f/1.8 S",price:597,detail:"50mm f/1.8",personallyUsed:false},{name:"Nikon Z 24-70mm f/4 S",price:897,detail:"24-70mm f/4",personallyUsed:false},{name:"Nikon Z 40mm f/2",price:277,detail:"40mm f/2",personallyUsed:false}],mid:[{name:"Nikon Z 24-70mm f/2.8 S",price:2296,detail:"24-70mm f/2.8",personallyUsed:false},{name:"Nikon Z 35mm f/1.4",price:599,detail:"35mm f/1.4",personallyUsed:false},{name:"Nikon Z 85mm f/1.8 S",price:797,detail:"85mm f/1.8",personallyUsed:false}],premium:[{name:"Nikon Z 14-24mm f/2.8 S",price:2496,detail:"14-24mm f/2.8",personallyUsed:false},{name:"Nikon Z 24-70mm f/2.8 S",price:2296,detail:"24-70mm f/2.8",personallyUsed:false},{name:"Nikon Z 70-200mm f/2.8 VR S",price:2596,detail:"70-200mm f/2.8",personallyUsed:false}]},
+"Canon EF":{budget:[{name:"Canon EF 50mm f/1.8 STM",price:125,detail:"50mm f/1.8",personallyUsed:false},{name:"Sigma 18-35mm f/1.8 Art",price:799,detail:"18-35mm f/1.8",personallyUsed:false},{name:"Canon EF 24-70mm f/2.8L II USM",price:1599,detail:"24-70mm f/2.8L",personallyUsed:false}]},
+"Fixed lens":{budget:[],mid:[],premium:[]}
+},
+accessories: {
+memoryCards:[{name:"ProGrade Digital CFexpress Type A 160GB",price:199,detail:"800MB/s read, 700MB/s write",personallyUsed:false},{name:"ProGrade Digital CFexpress Type B 325GB",price:249,detail:"1700MB/s read, 1500MB/s write",personallyUsed:false},{name:"SanDisk Extreme Pro 128GB SD UHS-II",price:22,detail:"300MB/s read, 260MB/s write",personallyUsed:false}],
+batteries:[{name:"Sony NP-FZ100 (2-Pack)",price:96,detail:"Fits A7/FX series, ~2hrs per battery",personallyUsed:false},{name:"Canon LP-E6NH (2-Pack)",price:119,detail:"Fits R5/R6/C70 series",personallyUsed:false},{name:"Nitecore UFZ100 USB-C Battery",price:39,detail:"USB-C rechargeable, NP-FZ100 compatible",personallyUsed:false}],
+cages:[{name:"SmallRig Full Cage for Sony FX3/FX30",price:89,detail:"NATO rails, cold shoe mounts, 1/4-20 threads",personallyUsed:false},{name:"Tilta Full Camera Cage for Canon R5 II",price:119,detail:"Built-in cable clamp, NATO compatible",personallyUsed:false},{name:"SmallRig Universal Half Cage",price:49,detail:"Fits most mirrorless bodies",personallyUsed:false}],
+straps:[{name:"Peak Design Slide",price:64,detail:"Quick-adjust sling strap, Anchor Link system",personallyUsed:false},{name:"BlackRapid Sport Breathe",price:73,detail:"Cross-body, weight distribution pad",personallyUsed:false},{name:"Peak Design Cuff",price:29,detail:"Wrist strap, quick-disconnect",personallyUsed:false}],
+storage:[{name:"Pelican 1510 Carry-On Case",price:189,detail:"Airline carry-on size, customizable foam",personallyUsed:false},{name:"Tenba BYOB 10 Camera Insert",price:49,detail:"Fits inside any bag, adjustable dividers",personallyUsed:false},{name:"Think Tank CF/SD Card Wallet",price:17,detail:"Holds 6 CF + 9 SD cards",personallyUsed:false}]
+}
+};
+
+// ═══════════════════════════════════════════
+// GEAR LIST
+// ═══════════════════════════════════════════
+let gearList = JSON.parse(sessionStorage.getItem('gearList') || '[]');
+
+function updateGearBadge() {
+  const badge = document.getElementById('gearlist-badge');
+  if (gearList.length > 0) {
+    badge.style.display = 'flex';
+    badge.textContent = gearList.length;
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function addToGearList(name, price, category, id) {
+  if (gearList.find(g => g.id === id)) {
+    showToast(`${name} is already in your gear list`);
+    return;
+  }
+  gearList.push({name, price, category, id});
+  sessionStorage.setItem('gearList', JSON.stringify(gearList));
+  updateGearBadge();
+  showToast(`✓ Added ${name} to gear list`);
+}
+
+function removeFromGearList(id) {
+  gearList = gearList.filter(g => g.id !== id);
+  sessionStorage.setItem('gearList', JSON.stringify(gearList));
+  updateGearBadge();
+  renderGearList();
+}
+
+function renderGearList() {
+  const container = document.getElementById('gearlist-content');
+  if (!gearList.length) {
+    container.innerHTML = `
+      <div class="gearlist-empty">
+        <div class="gle-icon">📋</div>
+        <p>Your gear list is empty. Take the quiz to get started.</p>
+        <button class="btn btn-primary" onclick="startQuiz()">Take the Quiz</button>
+      </div>`;
+    return;
+  }
+
+  const total = gearList.reduce((s, g) => s + g.price, 0);
+  const categories = ['Camera Body','Memory Cards','Batteries','Cages','Straps','Storage'];
+  let catHTML = '';
+  for (const cat of categories) {
+    const items = gearList.filter(g => g.category === cat);
+    if (!items.length) continue;
+    catHTML += `<div class="gearlist-category"><h3>${cat}</h3>`;
+    for (const item of items) {
+      catHTML += `
+        <div class="gl-item">
+          <div class="gl-item-name">${item.name}</div>
+          <div class="gl-item-price">$${item.price.toLocaleString()}</div>
+          <div class="gl-item-links">
+            <a href="#" data-affiliate="gl-${item.id}-amazon">Amazon</a>
+            <a href="#" data-affiliate="gl-${item.id}-bh">B&H</a>
+            <a href="#" data-affiliate="gl-${item.id}-direct">Direct</a>
+          </div>
+          <button class="gl-remove" onclick="removeFromGearList('${item.id}')" title="Remove">✕</button>
+        </div>`;
+    }
+    catHTML += '</div>';
+  }
+
+  container.innerHTML = `
+    ${topResults.length > 0 ? '<button class="kit-back" onclick="showScreen(\'results\')" style="margin-bottom:16px">← Back to Results</button>' : ''}
+    <div class="gearlist-total">
+      <div class="gl-total-label">Estimated Total</div>
+      <div class="gl-total-value">$${total.toLocaleString()}</div>
+    </div>
+    ${catHTML}
+    <div class="gearlist-note">Prices are approximate and don't include sales tax. We link to multiple stores so you can find the best deal.</div>`;
+}
+
+// ═══════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════
+
+function getShootDayKit(cam) {
+  let batteriesNeeded = 0;
+  if (cam.batteryPrice !== 0) {
+    const chargeTime = cam.batteryChargeMinutes || 150;
+    if (cam.batteryMinutes >= chargeTime) {
+      batteriesNeeded = 3;
+    } else {
+      batteriesNeeded = Math.ceil(chargeTime / cam.batteryMinutes) + 1;
+    }
+    batteriesNeeded = Math.max(2, Math.min(4, batteriesNeeded));
+  }
+  const batteryTotalCost = batteriesNeeded * cam.batteryPrice;
+  const chargerNeeded = batteriesNeeded > 2;
+  const chargerName = chargerNeeded ? "Dual Battery Charger" : (batteriesNeeded > 0 ? "Single Battery Charger" : null);
+  const chargerPrice = chargerNeeded ? 45 : 0;
+  const cardsNeeded = Math.ceil((cam.cardGBPerHour * 8) / cam.recommendedCardCapacity);
+  const cardTotalCost = cardsNeeded * cam.recommendedCardPrice;
+  const totalAccessoryCost = batteryTotalCost + chargerPrice + cardTotalCost;
+  const totalOwnershipCost = cam.price + totalAccessoryCost;
+  return { batteriesNeeded, batteryTotalCost, chargerNeeded, chargerName, chargerPrice, cardsNeeded, cardTotalCost, totalAccessoryCost, totalOwnershipCost };
+}
+function getBigCardOption(cam) {
+  const type = cam.cardType;
+  if (type.includes('CFexpress Type A')) return { name: 'ProGrade Digital CFexpress Type A 320GB', capacity: 320, price: 349 };
+  if (type.includes('CFexpress Type B')) return { name: 'ProGrade Digital CFexpress Type B 650GB', capacity: 650, price: 449 };
+  if (type.includes('CFast')) return { name: 'SanDisk Extreme Pro CFast 2.0 512GB', capacity: 512, price: 349 };
+  if (type.includes('microSD CFexpress')) return { name: 'Nikon microSD CFexpress 512GB', capacity: 512, price: 380 };
+  if (type.includes('microSD')) return { name: 'SanDisk Extreme Pro microSD 512GB', capacity: 512, price: 55 };
+  // SD cards — check if V90 is recommended (price > $50 means it's already V90)
+  if (cam.recommendedCardPrice > 50) return { name: 'ProGrade Gold 256GB V90 SD', capacity: 256, price: 200 };
+  return { name: 'SanDisk Extreme Pro 256GB SD UHS-II', capacity: 256, price: 38 };
+}
+
+function scrollToTop() {
+  window.scrollTo(0, 0);
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+}
+
+function scrollToTopWithInsurance() {
+  scrollToTop();
+  setTimeout(scrollToTop, 0);
+  setTimeout(scrollToTop, 50);
+  setTimeout(scrollToTop, 100);
+  setTimeout(scrollToTop, 200);
+  setTimeout(scrollToTop, 300);
+}
+
+function getBrandClass(brand) {
+  const b = brand.toLowerCase();
+  const map = {sony:'brand-sony',canon:'brand-canon',panasonic:'brand-panasonic',blackmagic:'brand-blackmagic',fujifilm:'brand-fujifilm',nikon:'brand-nikon',dji:'brand-dji',gopro:'brand-gopro',red:'brand-red'};
+  return map[b] || 'brand-default';
+}
+
+function camImageHTML(cam, size) {
+  return `<div class="cam-img-brand">${cam.brand}</div><div class="cam-img-icon">📷</div><div class="cam-img-model">${cam.name.replace(cam.brand+' ','')}</div>`;
+}
+
+function testedBadgeHTML(item) {
+  if (item && item.personallyUsed) return ' <span class="badge-tested">✓ Tested</span>';
+  return '';
+}
+
+function getStandoutFeature(cam) {
+  if (cam.rawVideo) return 'Internal RAW';
+  if (cam.lowLightPerformance === 'excellent') return 'Excellent low light';
+  if (cam.stabilization && cam.autofocus === 'excellent') return 'IBIS + fast AF';
+  if (cam.autofocus === 'excellent') return 'Excellent AF';
+  if (cam.stabilization) return '5-axis IBIS';
+  if (cam.frameRates.some(f=>f.includes('120'))) return '4K120';
+  return cam.bitDepth;
+}
+
+function convertAutofocus(val) {
+  const map = {excellent:'95/100',good:'78/100',basic:'55/100','manual only':'Manual'};
+  return map[val] || val;
+}
+function convertLowLight(val) {
+  const map = {excellent:'ISO 51200+',good:'ISO 12800',average:'ISO 6400',poor:'ISO 3200'};
+  return map[val] || val;
+}
+function convertBattery(val) {
+  const map = {excellent:'3+ hrs',good:'2+ hrs',average:'1.5 hrs',poor:'~1 hr'};
+  return map[val] || val || 'N/A';
+}
+function convertStabilization(cam) {
+  if (cam.stabilizationDetails) return cam.stabilizationDetails;
+  return cam.stabilization ? 'Yes' : '<span class="cross">No</span>';
+}
+
+// ═══════════════════════════════════════════
+// LOGIN MODAL
+// ═══════════════════════════════════════════
+function showLoginModal() {
+  document.getElementById('login-overlay').classList.add('visible');
+}
+function closeLoginModal(e) {
+  if (e && e.target && e.target !== document.getElementById('login-overlay')) return;
+  document.getElementById('login-overlay').classList.remove('visible');
+}
+
+// ═══════════════════════════════════════════
+// QUIZ LOGIC
+// ═══════════════════════════════════════════
+const QUESTIONS = [
+{id:'budget',q:"What's your budget for a camera body?",opts:['Under $1,000','$1,000 to $2,000','$2,000 to $4,000','$4,000 to $6,000','$6,000+']},
+{id:'useCase',q:"What kind of work are you doing?",multi:true,opts:['Weddings & Events','Commercials & Branded Content','Documentary','YouTube & Content Creation','Social Media','Music Videos','Narrative & Short Films','Action & Sports','A Bit of Everything']},
+{id:'experience',q:"How long have you been shooting?",opts:['Just getting started','1-2 years','3-5 years','5+ years, this is my career']},
+{id:'crew',q:"Are you usually shooting alone or with people?",opts:['Mostly solo','Sometimes have help','Usually have a crew']},
+{id:'brandLoyalty',q:"Any brand loyalty?",multi:true,opts:['Sony','Canon','Panasonic','Blackmagic','Fujifilm','Nikon','Open to anything']},
+{id:'autofocus',q:"How much do you rely on autofocus?",opts:['It has to be rock solid','Nice to have, but I can pull focus','I prefer manual focus']},
+{id:'photo',q:"Do you shoot stills too?",opts:['Yes, stills are just as important','Occasionally','Nope, video only']},
+{id:'size',q:"Does the size of the camera matter?",opts:['Small and light is a must','I prefer compact but can deal with bigger','Doesn\'t matter, give me the best image']},
+{id:'slowmo',q:"Do you need slow motion?",opts:['Yes, 4K 120fps is a must','Nice to have','Not really']},
+{id:'lowlight',q:"How often are you shooting in low light?",opts:['All the time','Sometimes','Rarely']}
+];
+
+const BUDGET_RANGES = [[0,1000],[1000,2000],[2000,4000],[4000,6000],[6000,100000]];
+
+let currentQuestion = 0;
+let answers = {};
+let topResults = [];
+
+function startQuiz() {
+  currentQuestion = 0;
+  answers = {};
+  showScreen('quiz');
+  renderQuestion();
+}
+
+function exitQuiz() { goHome(); }
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => {
+    s.classList.remove('active');
+    s.style.display = 'none';
+  });
+  const target = document.getElementById(id + '-screen');
+  target.classList.add('active');
+  target.style.display = 'block';
+  
+  // Reset scroll
+  window.scrollTo(0, 0);
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+  document.body.style.overflow = '';
+  document.documentElement.style.overflow = '';
+  
+  [0, 50, 100, 200, 400].forEach(ms => {
+    setTimeout(() => { window.scrollTo(0,0); document.documentElement.scrollTop = 0; }, ms);
+  });
+  
+  const quizEl = document.getElementById('quiz-screen');
+  if (quizEl && id !== 'quiz') { quizEl.scrollTop = 0; quizEl.style.display = 'none'; }
+  if (id === 'gearlist') renderGearList();
+  // Track where the user came from for kit back button
+  if (id === 'kit') {
+    // don't update lastScreen when going TO kit
+  } else {
+    window._lastScreen = id;
+  }
+  updateNavResults();
+}
+
+function goHome() {
+  showScreen('hub');
+}
+
+function prevQuestion() {
+  if (currentQuestion > 0) {
+    currentQuestion--;
+    renderQuestion();
+  }
+}
+
+function renderQuestion() {
+  const q = QUESTIONS[currentQuestion];
+  const total = QUESTIONS.length;
+  document.getElementById('quiz-step').textContent = `${currentQuestion + 1} / ${total}`;
+  document.getElementById('quiz-progress').style.width = `${((currentQuestion + 1) / total) * 100}%`;
+  document.getElementById('quiz-back-btn').style.visibility = currentQuestion === 0 ? 'hidden' : 'visible';
+
+  const isMulti = q.multi;
+  const prev = answers[q.id];
+
+  let html = `<div class="question-num">Question ${currentQuestion + 1}</div>`;
+  html += `<div class="question-text">${q.q}</div>`;
+  html += `<div class="options">`;
+  q.opts.forEach((opt, i) => {
+    const sel = isMulti ? (Array.isArray(prev) && prev.includes(opt)) : (prev === opt);
+    const indicator = isMulti ? '<div class="option-checkbox"></div>' : '<div class="option-dot"></div>';
+    html += `<div class="option ${sel ? 'selected' : ''}" data-idx="${i}" onclick="selectOption(${i})">${indicator}<span>${opt}</span></div>`;
+  });
+  html += `</div>`;
+
+  if (isMulti) {
+    const canNext = !q.required || (Array.isArray(prev) && prev.includes(q.required));
+    html += `<button class="btn btn-primary multi-next-btn ${canNext ? 'visible' : ''}" id="multi-next" onclick="advanceMulti()">Next →</button>`;
+  }
+
+  document.getElementById('question-wrap').innerHTML = html;
+}
+
+function selectOption(idx) {
+  const q = QUESTIONS[currentQuestion];
+  const opt = q.opts[idx];
+
+  if (q.multi) {
+    if (!Array.isArray(answers[q.id])) answers[q.id] = [];
+    const arr = answers[q.id];
+    const i = arr.indexOf(opt);
+    if (i >= 0) arr.splice(i, 1); else arr.push(opt);
+    renderQuestion();
+  } else {
+    answers[q.id] = opt;
+    renderQuestion();
+    setTimeout(() => {
+      if (currentQuestion < QUESTIONS.length - 1) {
+        currentQuestion++;
+        renderQuestion();
+      } else {
+        showResults();
+      }
+    }, 300);
+  }
+}
+
+function advanceMulti() {
+  const q = QUESTIONS[currentQuestion];
+  if (q.required && (!Array.isArray(answers[q.id]) || !answers[q.id].includes(q.required))) return;
+  if (currentQuestion < QUESTIONS.length - 1) {
+    currentQuestion++;
+    renderQuestion();
+  } else {
+    showResults();
+  }
+}
+
+// ═══════════════════════════════════════════
+// SCORING
+// ═══════════════════════════════════════════
+function scoreCamera(cam, ans) {
+  let score = 0;
+  const budgetIdx = QUESTIONS[0].opts.indexOf(ans.budget);
+  const budgetMax = BUDGET_RANGES[budgetIdx][1];
+  const budgetMin = BUDGET_RANGES[budgetIdx][0];
+  if (cam.price >= budgetMax) return -1;
+
+  // Check total ownership cost (body + batteries + cards for 8hr day)
+  if (cam.batteryMinutes) {
+    const kit = getShootDayKit(cam);
+    if (kit.totalOwnershipCost > budgetMax * 1.5) return -1;
+    // Bonus for cameras where total ownership is well under budget
+    const ownershipRatio = kit.totalOwnershipCost / budgetMax;
+    if (ownershipRatio < 0.7) score += 5;
+    else if (ownershipRatio < 0.9) score += 3;
+  }
+
+  // Budget fit - sweet spot bonus (not too cheap, not maxing out)
+  const range = budgetMax - budgetMin;
+  const sweetSpot = budgetMin + range * 0.6;
+  const dist = Math.abs(cam.price - sweetSpot) / range;
+  score += Math.max(0, (1 - dist) * 15);
+
+  // Use case
+  const useCaseMap = {'Weddings & Events':'wedding','Commercials & Branded Content':'commercial',Documentary:'documentary','YouTube & Content Creation':'YouTube/content','Social Media':'social media','Music Videos':'music video','Narrative & Short Films':'narrative film','Action & Sports':'action/sports','A Bit of Everything':'everything'};
+  const selectedCases = (ans.useCase || []).map(u => useCaseMap[u] || u.toLowerCase());
+  if (selectedCases.includes('everything') || selectedCases.some(sc => cam.primaryUseCases.some(pc => pc.toLowerCase().includes(sc)))) {
+    score += 20;
+  }
+
+  // Experience
+  const expMap = {'Just getting started':'beginner','1-2 years':'intermediate','3-5 years':'advanced','5+ years, this is my career':'professional'};
+  const userExp = expMap[ans.experience] || 'intermediate';
+  if (cam.experienceLevel.includes(userExp)) score += 10;
+
+  // Crew
+  if (ans.crew === 'Mostly solo' && cam.soloOperatorFriendly) score += 8;
+  if (ans.crew === 'Usually have a crew') score += 4;
+
+  // AF
+  if (ans.autofocus === 'It has to be rock solid') {
+    if (cam.autofocus === 'excellent') score += 12;
+    else if (cam.autofocus === 'good') score += 6;
+    else if (cam.autofocus === 'manual only') score -= 5;
+  } else if (ans.autofocus === 'I prefer manual focus') {
+    score += 5;
+  } else {
+    if (cam.autofocus === 'excellent') score += 8;
+    else if (cam.autofocus === 'good') score += 5;
+  }
+
+  // Photo
+  if (ans.photo === 'Yes, stills are just as important') {
+    if (cam.photoCapable && cam.photoQuality === 'exceptional') score += 10;
+    else if (cam.photoCapable && cam.photoQuality === 'excellent') score += 8;
+    else if (cam.photoCapable) score += 4;
+    else score -= 8;
+  } else if (ans.photo === 'Occasionally' && cam.photoCapable) {
+    score += 3;
+  }
+
+  // Size
+  if (ans.size === 'Small and light is a must') {
+    if (cam.weightGrams < 500) score += 8;
+    else if (cam.weightGrams < 700) score += 4;
+    else score -= 4;
+  }
+
+  // Slow-mo
+  if (ans.slowmo === 'Yes, 4K 120fps is a must') {
+    if (cam.frameRates.some(f => f.includes('4K120'))) score += 10;
+    else score -= 5;
+  } else if (ans.slowmo === 'Nice to have' && cam.frameRates.some(f => f.includes('120'))) {
+    score += 4;
+  }
+
+  // Low light
+  if (ans.lowlight === 'All the time') {
+    if (cam.lowLightPerformance === 'excellent') score += 10;
+    else if (cam.lowLightPerformance === 'good') score += 5;
+    else score -= 3;
+  }
+
+  // Stabilization bonus for solo/run-and-gun
+  if (cam.stabilization && (ans.crew === 'Mostly solo')) score += 5;
+
+  // Dual slots bonus
+  if (cam.dualSlots) score += 3;
+
+  // Brand loyalty (multi-select)
+  const brandPicks = Array.isArray(ans.brandLoyalty) ? ans.brandLoyalty : (ans.brandLoyalty ? [ans.brandLoyalty] : []);
+  if (brandPicks.length && !brandPicks.includes('Open to anything')) {
+    if (brandPicks.includes(cam.brand)) score += 15;
+  }
+
+  return score;
+}
+
+function showResults() {
+  // Generate session tracking ID
+  quizSessionId = generateSessionId();
+
+  // Force quiz overlay closed
+  const quizEl = document.getElementById('quiz-screen');
+  quizEl.classList.remove('active');
+  quizEl.style.display = 'none';
+  
+  // Force all screens hidden, then show results
+  document.querySelectorAll('.screen').forEach(s => {
+    s.classList.remove('active');
+    s.style.display = 'none';
+  });
+  const resultsEl = document.getElementById('results-screen');
+  resultsEl.classList.add('active');
+  resultsEl.style.display = 'block';
+  resultsEl.style.opacity = '1';
+  
+  // Nuke anything blocking scroll
+  document.body.style.overflow = '';
+  document.body.style.position = '';
+  document.body.style.height = '';
+  document.documentElement.style.overflow = '';
+  
+  try { _showResults(); } catch(e) { 
+    console.error('showResults error:', e); 
+    document.getElementById('unified-comparison').innerHTML = '<p style="color:red;padding:40px;text-align:center;font-size:24px">ERROR: ' + e.message + '</p>'; 
+  }
+  
+  // Aggressive scroll to top after everything is rendered
+  window.scrollTo(0, 0);
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+  [0, 50, 100, 200, 500].forEach(ms => {
+    setTimeout(() => { window.scrollTo(0, 0); document.documentElement.scrollTop = 0; }, ms);
+  });
+}
+function _showResults() {
+  const scored = DB.cameras.map(c => ({cam: c, score: scoreCamera(c, answers)}));
+  const inBudget = scored.filter(s => s.score >= 0).sort((a, b) => b.score - a.score);
+  const allScored = scored.filter(s => s.score !== -1).sort((a, b) => b.score - a.score);
+  // Also score ignoring budget
+  const allIgnoringBudget = DB.cameras.map(c => {
+    let s = scoreCamera({...c, price: 0}, answers);
+    // re-score without budget penalty
+    s = scoreCameraIgnoringBudget(c, answers);
+    return {cam: c, score: s};
+  }).sort((a, b) => b.score - a.score);
+
+  const top3 = inBudget.slice(0, 3);
+  topResults = top3; // persist for navigation
+  if (top3.length === 0) {
+    document.getElementById('unified-comparison').innerHTML = '<p style="text-align:center;color:var(--text2);padding:40px">No cameras match your budget. Try increasing it.</p>';
+    showScreen('results');
+    return;
+  }
+
+  const maxScore = Math.max(...top3.map(t => t.score));
+
+  // Compute upsell: best camera ignoring budget that scores >5% higher on needs than #1
+  const top1NeedsScore = scoreCameraIgnoringBudget(top3[0].cam, answers);
+  const bestOverall = allIgnoringBudget.find(entry => {
+    // Must not already be in top 3
+    if (top3.find(t => t.cam.id === entry.cam.id)) return false;
+    // Must score meaningfully higher on needs than #1 (at least 5% better)
+    const needsScore = scoreCameraIgnoringBudget(entry.cam, answers);
+    return needsScore > top1NeedsScore * 1.05;
+  });
+  const showUpsell = !!bestOverall;
+
+  // Build all columns: top3 + optional upsell (max 4 columns)
+  const allCols = [];
+  top3.forEach((t, i) => allCols.push({entry: t, idx: i, type: 'top3'}));
+  
+  if (showUpsell) {
+    const u = bestOverall.cam;
+    const b = top3[0].cam;
+    const advantages = [];
+    if (u.autofocus === 'excellent' && b.autofocus !== 'excellent') advantages.push('Better autofocus');
+    if (u.lowLightPerformance === 'excellent' && b.lowLightPerformance !== 'excellent') advantages.push('Better low light');
+    if (u.rawVideo && !b.rawVideo) advantages.push('Internal RAW recording');
+    if (u.stabilization && !b.stabilization) advantages.push('In-body stabilization');
+    if (u.frameRates.some(f => f.includes('4K120')) && !b.frameRates.some(f => f.includes('4K120'))) advantages.push('4K 120fps');
+    if (u.dualSlots && !b.dualSlots) advantages.push('Dual card slots');
+    if (u.sensorSize === 'Full Frame' && b.sensorSize !== 'Full Frame') advantages.push('Full frame sensor');
+    if ((u.photoQuality === 'exceptional' || u.photoQuality === 'excellent') && b.photoQuality !== 'exceptional' && b.photoQuality !== 'excellent') advantages.push('Better photo quality');
+    if (u.maxVideoResolution === '8K' && b.maxVideoResolution !== '8K') advantages.push('8K recording');
+    else if (u.maxVideoResolution === '6K' && b.maxVideoResolution === '4K') advantages.push('6K recording');
+    if (u.weightGrams < b.weightGrams - 100) advantages.push('Lighter (' + u.weightGrams + 'g)');
+    const priceDiff = u.price - b.price;
+    allCols.push({entry: bestOverall, idx: allCols.length, type: 'upsell', advantages, priceDiff});
+  }
+
+  // Build comparison table
+  let tableHTML = '<table><thead><tr><th class="spec-label-col"></th>';
+  allCols.forEach((col) => {
+    const t = col.entry;
+    // Match % based on needs-only score (no budget penalty)
+    const needsScore = scoreCameraIgnoringBudget(t.cam, answers);
+    const maxNeedsScore = Math.max(...allCols.map(c => scoreCameraIgnoringBudget(c.entry.cam, answers)));
+    let pct = Math.max(65, Math.min(98, Math.round((needsScore / maxNeedsScore) * 98)));
+    // Spread out the top 3 a bit more
+    if (col.type === 'top3' && col.idx > 0) pct = Math.max(65, pct - (col.idx * 5));
+    const isTop = col.type === 'top3' && col.idx === 0;
+    let typeBadge = '';
+    let upsellInfo = '';
+    if (col.type === 'upsell') {
+      typeBadge = '<div style="font-size:10px;font-weight:600;color:var(--green);margin-top:4px">🏆 If Budget Wasn\'t a Factor</div>';
+      if (col.advantages && col.advantages.length) {
+        upsellInfo += `<div style="font-size:11px;color:var(--green);margin-top:6px;line-height:1.5">` + col.advantages.map(a => `✓ ${a}`).join('<br>') + `</div>`;
+      }
+      if (col.priceDiff > 0) {
+        upsellInfo += `<div style="font-size:11px;color:var(--text3);margin-top:4px">+$${col.priceDiff.toLocaleString()} over #1 pick</div>`;
+      }
+    }
+    tableHTML += `<th class="cam-col ${isTop ? 'top-pick-col' : ''}">
+      <div class="cam-col-image ${getBrandClass(t.cam.brand)}">${camImageHTML(t.cam,'sm')}</div>
+      <div class="cam-col-name">${t.cam.name}${testedBadgeHTML(t.cam)}</div>
+      <div class="cam-col-price">$${t.cam.price.toLocaleString()}</div>
+      <div class="cam-col-match">${pct}% match</div>
+      ${typeBadge}
+      ${upsellInfo}
+    </th>`;
+    // View Details button goes in table body to keep alignment
+  });
+  tableHTML += '</tr></thead><tbody>';
+
+  const specs = [
+    ['Sensor', c => c.sensorSize],
+    ['Resolution', c => c.maxVideoResolution],
+    ['Frame Rates', c => c.frameRates.slice(0, 3).join(', ')],
+    ['Bit Depth', c => c.bitDepth],
+    ['AF System', c => c.autofocusDetails || c.autofocus],
+    ['AF Score', c => convertAutofocus(c.autofocus)],
+    ['Low Light', c => convertLowLight(c.lowLightPerformance)],
+    ['Stabilization', c => convertStabilization(c)],
+    ['Battery', c => c.batteryType + ' (' + c.batteryMinutes + 'min)'],
+    ['Memory Card', c => c.cardType + (c.cardSlots > 1 ? ' ×' + c.cardSlots : '')],
+    ['Weight', c => c.weightGrams + 'g'],
+    ['Dual Slots', c => c.dualSlots ? '<span class="check">✓</span>' : '<span class="cross">✗</span>'],
+    ['Photo', c => c.photoCapable ? c.megapixels + 'MP' : '<span class="cross">No</span>'],
+    ['True Cost (8hr day)', c => { const k = getShootDayKit(c); return '<strong style="color:var(--amber)">$' + k.totalOwnershipCost.toLocaleString() + '</strong>'; }]
+  ];
+  specs.forEach(([label, fn]) => {
+    tableHTML += `<tr><td class="spec-label-col">${label}</td>`;
+    allCols.forEach((col) => {
+      const isTop = col.type === 'top3' && col.idx === 0;
+      tableHTML += `<td class="${isTop ? 'top-pick-col' : ''}">${fn(col.entry.cam)}</td>`;
+    });
+    tableHTML += '</tr>';
+  });
+  // Add View Details button row
+  tableHTML += '<tr><td class="spec-label-col"></td>';
+  allCols.forEach((col) => {
+    const isTop = col.type === 'top3' && col.idx === 0;
+    tableHTML += `<td class="${isTop ? 'top-pick-col' : ''}"><div class="cam-col-btn"><button class="btn ${isTop ? 'btn-primary' : 'btn-secondary'} btn-sm" onclick="showKit('${col.entry.cam.id}')">View Details →</button></div></td>`;
+  });
+  tableHTML += '</tr>';
+  tableHTML += '</tbody></table>';
+  document.getElementById('unified-comparison').innerHTML = tableHTML;
+
+  // Extra section: scoring link + save results (no more extra pick cards)
+  let extraHTML = `
+    <div class="scoring-link"><button class="btn btn-secondary" style="width:280px;margin:24px auto 0;display:flex" onclick="showScreen('scoring')">📊 How We Score</button></div>
+    <div class="save-results">
+      <h3>Save Your Results</h3>
+      <div class="save-results-grid">
+        <div class="save-results-card" onclick="handleEmailResults()">
+          <div class="sr-icon">📧</div>
+          <div class="sr-label">Email my results</div>
+          <div class="sr-sub">Get your top picks sent to your inbox</div>
+        </div>
+        <div class="save-results-card coming-soon-state">
+          <div class="sr-icon">👤</div>
+          <div class="sr-label">Create an account</div>
+          <div class="sr-sub">Coming soon</div>
+        </div>
+      </div>
+    </div>
+    <div class="feedback-section">
+      <button class="feedback-btn" onclick="openFeedback()">💬 Give Feedback</button>
+      <div style="font-size:12px;color:var(--text3);margin-top:8px">Session: ${quizSessionId}</div>
+    </div>`;
+
+  document.getElementById('extra-picks-container').innerHTML = extraHTML;
+  showScreen('results');
+}
+
+function scoreCameraIgnoringBudget(cam, ans) {
+  let score = 0;
+  const useCaseMap = {'Weddings & Events':'wedding','Commercials & Branded Content':'commercial',Documentary:'documentary','YouTube & Content Creation':'YouTube/content','Social Media':'social media','Music Videos':'music video','Narrative & Short Films':'narrative film','Action & Sports':'action/sports','A Bit of Everything':'everything'};
+  const selectedCases = (ans.useCase || []).map(u => useCaseMap[u] || u.toLowerCase());
+  if (selectedCases.includes('everything') || selectedCases.some(sc => cam.primaryUseCases.some(pc => pc.toLowerCase().includes(sc)))) score += 20;
+  const expMap = {'Just getting started':'beginner','1-2 years':'intermediate','3-5 years':'advanced','5+ years, this is my career':'professional'};
+  if (cam.experienceLevel.includes(expMap[ans.experience] || 'intermediate')) score += 10;
+  if (ans.crew === 'Mostly solo' && cam.soloOperatorFriendly) score += 8;
+  if (ans.autofocus === 'It has to be rock solid') {
+    if (cam.autofocus === 'excellent') score += 12; else if (cam.autofocus === 'good') score += 6; else if (cam.autofocus === 'manual only') score -= 5;
+  } else if (ans.autofocus === 'I prefer manual focus') { score += 5; } else { if (cam.autofocus === 'excellent') score += 8; else if (cam.autofocus === 'good') score += 5; }
+  if (ans.photo === 'Yes, stills are just as important') {
+    if (cam.photoCapable && cam.photoQuality === 'exceptional') score += 10; else if (cam.photoCapable && cam.photoQuality === 'excellent') score += 8; else if (cam.photoCapable) score += 4; else score -= 8;
+  }
+  if (ans.size === 'Small and light is a must') { if (cam.weightGrams < 500) score += 8; else if (cam.weightGrams < 700) score += 4; else score -= 4; }
+  if (ans.slowmo === 'Yes, 4K 120fps is a must') { if (cam.frameRates.some(f => f.includes('4K120'))) score += 10; else score -= 5; }
+  if (ans.lowlight === 'All the time') { if (cam.lowLightPerformance === 'excellent') score += 10; else if (cam.lowLightPerformance === 'good') score += 5; else score -= 3; }
+  if (cam.stabilization && ans.crew === 'Mostly solo') score += 5;
+  if (cam.dualSlots) score += 3;
+  const brandPicks2 = Array.isArray(ans.brandLoyalty) ? ans.brandLoyalty : (ans.brandLoyalty ? [ans.brandLoyalty] : []);
+  if (brandPicks2.length && !brandPicks2.includes('Open to anything')) {
+    if (brandPicks2.includes(cam.brand)) score += 15;
+  }
+  return score;
+}
+
+// ═══════════════════════════════════════════
+// KIT PAGE
+// ═══════════════════════════════════════════
+function showKit(camId) {
+  const cam = DB.cameras.find(c => c.id === camId);
+  if (!cam) return;
+
+  let html = `
+    <div class="kit-header">
+      <div class="kit-image ${getBrandClass(cam.brand)}">${camImageHTML(cam)}</div>
+      <div class="kit-info">
+        <div class="kit-brand">${cam.brand}</div>
+        <h2>${cam.name}${testedBadgeHTML(cam)}</h2>
+        <div class="kit-price">$${cam.price.toLocaleString()}</div>
+        <div class="kit-buy-row">
+          <button class="btn btn-primary btn-sm" onclick="addToGearList('${cam.name}',${cam.price},'Camera Body','${cam.id}')">+ Add to Gear List</button>
+          <button class="btn-deal-alert" onclick="handleDealAlert('${cam.name}')">🔔 Deal Alerts</button>
+        </div>
+      </div>
+    </div>`;
+
+  // Specs grid
+  html += `<div class="kit-section"><h3>Full Specs</h3><div class="specs-grid">`;
+  const specItems = [
+    ['Sensor', cam.sensorSize],
+    ['Megapixels', cam.megapixels + 'MP'],
+    ['Max Resolution', cam.maxVideoResolution],
+    ['Frame Rates', cam.frameRates.join(', ')],
+    ['Bit Depth', cam.bitDepth],
+    ['AF System', cam.autofocusDetails || cam.autofocus],
+    ['AF Score', convertAutofocus(cam.autofocus)],
+    ['Low Light', convertLowLight(cam.lowLightPerformance)],
+    ['Stabilization', convertStabilization(cam)],
+    ['Weight', cam.weightGrams + 'g'],
+    ['Battery', convertBattery(cam.batteryLife)],
+    ['Dual Slots', cam.dualSlots ? 'Yes' : 'No'],
+    ['Mount', cam.mount],
+    ['RAW Video', cam.rawVideo ? 'Yes' : 'No']
+  ];
+  specItems.forEach(([label, val]) => {
+    html += `<div class="spec-item"><div class="spec-label">${label}</div><div class="spec-value">${val}</div></div>`;
+  });
+  html += `</div></div>`;
+
+  // Pros/Cons
+  html += `<div class="kit-section"><h3>Strengths & Limitations</h3><div class="pros-cons">
+    <div class="pros"><h4>✓ Strengths</h4><ul>${cam.notablePros.map(p => `<li>${p}</li>`).join('')}</ul></div>
+    <div class="cons"><h4>✗ Limitations</h4><ul>${cam.notableCons.map(c => `<li>${c}</li>`).join('')}</ul></div>
+  </div></div>`;
+
+  // Shoot Day Kit
+  const kit = getShootDayKit(cam);
+  html += `<div class="kit-section"><h3>🎬 What You Need for a Full Shoot Day (8 Hours)</h3>`;
+  
+  // Batteries
+  if (kit.batteriesNeeded > 0) {
+    html += `<h4>🔋 Batteries</h4><div class="accessory-cards">`;
+    html += `<div class="acc-card">
+      <div class="item-image-box"><div class="item-img-icon">🔋</div><div class="item-img-name">${cam.batteryType}</div></div>
+      <div class="acc-name">${cam.batteryType} × ${kit.batteriesNeeded}</div>
+      <div class="acc-detail">${cam.batteryMinutes} min per battery · ${cam.batteryChargeMinutes} min to charge · ${kit.batteriesNeeded} batteries (cycling with dual charger)</div>
+      <div class="acc-price">$${kit.batteryTotalCost.toLocaleString()} total ($${cam.batteryPrice} each)</div>
+      <button class="btn btn-secondary btn-sm" style="width:100%;margin-top:6px" onclick="addToGearList('${cam.batteryType} ×${kit.batteriesNeeded}',${kit.batteryTotalCost},'Batteries','bat-${cam.id}')">+ Add to Gear List</button>
+      <button class="btn-deal-alert" onclick="handleDealAlert('${cam.batteryType}')">🔔 Deal Alerts</button>
+    </div>`;
+    if (kit.chargerNeeded) {
+      html += `<div class="acc-card">
+        <div class="item-image-box"><div class="item-img-icon">⚡</div><div class="item-img-name">Dual Charger</div></div>
+        <div class="acc-name">${kit.chargerName}</div>
+        <div class="acc-detail">Recommended when using ${kit.batteriesNeeded}+ batteries. Charge two at once.</div>
+        <div class="acc-price">~$${kit.chargerPrice}</div>
+        <button class="btn btn-secondary btn-sm" style="width:100%;margin-top:6px" onclick="addToGearList('Dual Battery Charger',${kit.chargerPrice},'Batteries','charger-${cam.id}')">+ Add to Gear List</button>
+        <button class="btn-deal-alert" onclick="handleDealAlert('Dual Battery Charger for ${cam.batteryType}')">🔔 Deal Alerts</button>
+      </div>`;
+    }
+    html += `</div>`;
+  } else {
+    html += `<h4>🔋 Battery</h4><p style="color:var(--text2);font-size:14px;margin-bottom:16px">Built-in battery · ${cam.batteryMinutes} min per charge · ${cam.batteryChargeMinutes} min to charge via USB-C</p>`;
+  }
+  
+  // Memory Cards
+  // Memory card options: multiple smaller vs fewer bigger
+  const totalGB = cam.cardGBPerHour * 8;
+  const bigCardCapacity = getBigCardOption(cam);
+  const bigCardsNeeded = Math.ceil(totalGB / bigCardCapacity.capacity);
+  const smallOption = { cards: kit.cardsNeeded, name: cam.recommendedCard, price: cam.recommendedCardPrice, total: kit.cardTotalCost, capacity: cam.recommendedCardCapacity };
+  const showBigOption = bigCardCapacity.capacity > cam.recommendedCardCapacity && bigCardsNeeded < kit.cardsNeeded;
+
+  html += `<h4>💾 Memory Cards</h4><p style="color:var(--text3);font-size:12px;margin-bottom:12px">Based on highest quality codec (~${cam.cardGBPerHour}GB/hr, ${totalGB}GB for 8 hours). Lower quality settings need less storage.</p><div class="accessory-cards">`;
+  html += `<div class="acc-card">
+    <div class="item-image-box"><div class="item-img-icon">💾</div><div class="item-img-name">${smallOption.name}</div></div>
+    <div class="acc-name">${smallOption.name} × ${smallOption.cards}</div>
+    <div class="acc-detail">${cam.cardType} · ${smallOption.capacity}GB each · ${smallOption.cards} cards for 8hrs</div>
+    <div class="acc-price">$${smallOption.total.toLocaleString()} total ($${smallOption.price} each)</div>
+    <button class="btn btn-secondary btn-sm" style="width:100%;margin-top:6px" onclick="addToGearList('${smallOption.name} ×${smallOption.cards}',${smallOption.total},'Memory Cards','card-${cam.id}')">+ Add to Gear List</button>
+    <button class="btn-deal-alert" onclick="handleDealAlert('${smallOption.name}')">🔔 Deal Alerts</button>
+  </div>`;
+  if (showBigOption) {
+    const bigTotal = bigCardsNeeded * bigCardCapacity.price;
+    html += `<div class="acc-card">
+      <div class="item-image-box"><div class="item-img-icon">💾</div><div class="item-img-name">${bigCardCapacity.name}</div></div>
+      <div class="acc-name">${bigCardCapacity.name} × ${bigCardsNeeded}</div>
+      <div class="acc-detail">${cam.cardType} · ${bigCardCapacity.capacity}GB each · fewer swaps${bigTotal < smallOption.total ? ' · cheaper overall' : ''}</div>
+      <div class="acc-price">$${bigTotal.toLocaleString()} total ($${bigCardCapacity.price} each)</div>
+      <button class="btn btn-secondary btn-sm" style="width:100%;margin-top:6px" onclick="addToGearList('${bigCardCapacity.name} ×${bigCardsNeeded}',${bigTotal},'Memory Cards','card-big-${cam.id}')">+ Add to Gear List</button>
+      <button class="btn-deal-alert" onclick="handleDealAlert('${bigCardCapacity.name}')">🔔 Deal Alerts</button>
+    </div>`;
+  }
+  html += `</div>`;
+  
+  // True Cost Summary
+  html += `<div class="kit-budget-summary">
+    <h3>💰 True Cost of Ownership</h3>
+    <div class="kit-budget-row"><span class="budget-label">Camera Body</span><span class="budget-value">$${cam.price.toLocaleString()}</span></div>
+    <div class="kit-budget-row"><span class="budget-label">Batteries (${kit.batteriesNeeded}×)</span><span class="budget-value">$${kit.batteryTotalCost.toLocaleString()}</span></div>`;
+  if (kit.chargerNeeded) {
+    html += `<div class="kit-budget-row"><span class="budget-label">Dual Charger</span><span class="budget-value">$${kit.chargerPrice}</span></div>`;
+  }
+  html += `<div class="kit-budget-row"><span class="budget-label">Memory Cards (${kit.cardsNeeded}×)</span><span class="budget-value">$${kit.cardTotalCost.toLocaleString()}</span></div>
+    <div class="kit-budget-row total"><span class="budget-label">Total for 8-Hour Shoot Day</span><span class="budget-value green">$${kit.totalOwnershipCost.toLocaleString()}</span></div>
+  </div>`;
+  html += `</div>`;
+
+  // Other Accessories
+  html += `<div class="kit-section"><h3>Other Accessories</h3>`;
+  const accCats = [{name:'Cages',items:DB.accessories.cages,icon:'🔩',cat:'Cages'},{name:'Straps',items:DB.accessories.straps,icon:'🎒',cat:'Straps'},{name:'Storage',items:DB.accessories.storage,icon:'📦',cat:'Storage'}];
+  accCats.forEach(ac => {
+    html += `<h4>${ac.name}</h4><div class="accessory-cards">`;
+    ac.items.forEach(a => {
+      const aid = a.name.toLowerCase().replace(/[^a-z0-9]/g,'-');
+      html += `
+        <div class="acc-card">
+          <div class="item-image-box"><div class="item-img-icon">${ac.icon}</div><div class="item-img-name">${a.name}</div></div>
+          <div class="acc-name">${a.name}${testedBadgeHTML(a)}</div>
+          <div class="acc-detail">${a.detail}</div>
+          <div class="acc-price">$${a.price.toLocaleString()}</div>
+          <button class="btn btn-secondary btn-sm" style="width:100%;margin-top:6px" onclick="addToGearList('${a.name.replace(/'/g,"\\'")}',${a.price},'${ac.cat}','${aid}')">+ Add to Gear List</button>
+          <button class="btn-deal-alert" onclick="handleDealAlert('${a.name.replace(/'/g,"\\'")}')">🔔 Deal Alerts</button>
+        </div>`;
+    });
+    html += `</div>`;
+  });
+  html += `</div>`;
+
+  document.getElementById('kit-content').innerHTML = html;
+  // Update back button based on where user came from
+  const backBtn = document.getElementById('kit-back-btn');
+  if (window._lastScreen === 'library' || window._lastScreen === 'library-compare') {
+    backBtn.textContent = '← Back to Library';
+    backBtn.onclick = () => showScreen(window._lastScreen);
+  } else {
+    backBtn.textContent = '← Back to Results';
+    backBtn.onclick = () => showScreen('results');
+  }
+  showScreen('kit');
+}
+
+// ═══════════════════════════════════════════
+// EMAIL / DEAL ALERTS
+// ═══════════════════════════════════════════
+let userEmail = sessionStorage.getItem('userEmail') || '';
+let emailAlerts = JSON.parse(sessionStorage.getItem('emailAlerts') || '[]');
+let pendingAlert = null;
+
+function handleDealAlert(itemName) {
+  if (userEmail) {
+    emailAlerts.push({item: itemName, email: userEmail, date: new Date().toISOString()});
+    sessionStorage.setItem('emailAlerts', JSON.stringify(emailAlerts));
+    showToast(`🔔 Deal alert set for ${itemName}`);
+  } else {
+    pendingAlert = itemName;
+    document.getElementById('email-popup-title').textContent = 'Get deal alerts when prices drop';
+    document.getElementById('email-popup-sub').textContent = `Enter your email to get notified about ${itemName} deals.`;
+    document.getElementById('email-overlay').classList.add('visible');
+  }
+}
+
+function handleEmailResults() {
+  if (userEmail) {
+    showToast('📧 Results sent to ' + userEmail);
+  } else {
+    pendingAlert = '__results__';
+    document.getElementById('email-popup-title').textContent = 'Email your results';
+    document.getElementById('email-popup-sub').textContent = 'Enter your email and we\'ll send your top camera matches.';
+    document.getElementById('email-overlay').classList.add('visible');
+  }
+}
+
+function submitEmailPopup() {
+  const input = document.getElementById('popup-email');
+  const email = input.value.trim();
+  if (!email || !email.includes('@')) { input.style.borderColor = 'var(--red)'; return; }
+  userEmail = email;
+  sessionStorage.setItem('userEmail', email);
+  closeEmailPopup();
+  if (pendingAlert === '__results__') {
+    showToast('📧 Results sent to ' + email);
+  } else if (pendingAlert) {
+    emailAlerts.push({item: pendingAlert, email, date: new Date().toISOString()});
+    sessionStorage.setItem('emailAlerts', JSON.stringify(emailAlerts));
+    showToast(`🔔 Deal alert set for ${pendingAlert}`);
+  }
+  pendingAlert = null;
+}
+
+function closeEmailPopup(e) {
+  if (e && e.target && e.target !== document.getElementById('email-overlay')) return;
+  document.getElementById('email-overlay').classList.remove('visible');
+  pendingAlert = null;
+}
+
+// ═══════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════
+function showToast(msg) {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(() => { toast.classList.add('fade-out'); }, 2500);
+  setTimeout(() => { toast.remove(); }, 3000);
+}
+
+function updateNavResults() {
+  const el = document.getElementById('nav-results-link');
+  if (el) el.style.display = topResults.length > 0 ? 'inline' : 'none';
+}
+
+// ═══════════════════════════════════════════
+// SESSION ID & FEEDBACK
+// ═══════════════════════════════════════════
+let quizSessionId = null;
+let feedbackRating = 0;
+
+function generateSessionId() {
+  const ts = Date.now().toString(36);
+  const rand = Math.random().toString(36).substring(2, 6);
+  return ('CM-' + ts + '-' + rand).toUpperCase();
+}
+
+function openFeedback() {
+  if (!quizSessionId) {
+    showToast('Take the quiz first to leave feedback');
+    return;
+  }
+  document.getElementById('fb-session-id').textContent = 'Session: ' + quizSessionId;
+  const emailVal = sessionStorage.getItem('userEmail') || '';
+  if (emailVal) document.getElementById('fb-email').value = emailVal;
+  feedbackRating = 0;
+  document.querySelectorAll('#fb-rating button').forEach(b => b.classList.remove('active'));
+  document.getElementById('fb-type').value = '';
+  document.getElementById('fb-message').value = '';
+  document.getElementById('feedback-overlay').classList.add('visible');
+}
+
+function closeFeedback(e) {
+  if (e && e.target !== e.currentTarget) return;
+  document.getElementById('feedback-overlay').classList.remove('visible');
+}
+
+function setRating(n) {
+  feedbackRating = n;
+  document.querySelectorAll('#fb-rating button').forEach((b, i) => {
+    b.classList.toggle('active', i < n);
+  });
+}
+
+function submitFeedback() {
+  const type = document.getElementById('fb-type').value;
+  const message = document.getElementById('fb-message').value.trim();
+  if (!type) { showToast('Please select a feedback type'); return; }
+  if (!message) { showToast('Please tell us more'); return; }
+  const feedback = {
+    sessionId: quizSessionId,
+    rating: feedbackRating,
+    type: type,
+    message: message,
+    email: document.getElementById('fb-email').value.trim(),
+    answers: Object.assign({}, answers),
+    topResults: topResults.slice(0, 3).map(r => ({ cam: r.cam.name, score: r.score })),
+    timestamp: new Date().toISOString(),
+    userAgent: navigator.userAgent
+  };
+  // Store locally (we'll add a backend later)
+  const stored = JSON.parse(localStorage.getItem('cm_feedback') || '[]');
+  stored.push(feedback);
+  localStorage.setItem('cm_feedback', JSON.stringify(stored));
+  closeFeedback();
+  showToast('Thanks for the feedback! 🙏');
+}
+
+// ═══════════════════════════════════════════
+// CAMERA LIBRARY
+// ═══════════════════════════════════════════
+let librarySelected = [];
+let libraryFilter = 'all';
+
+function showLibrary() {
+  renderLibrary();
+  showScreen('library');
+}
+
+function renderLibrary() {
+  const cams = DB.cameras;
+  // Build brand filters
+  const brands = [...new Set(cams.map(c => c.brand))].sort();
+  const filtersEl = document.getElementById('library-filters');
+  filtersEl.innerHTML = `<button class="lib-filter ${libraryFilter==='all'?'active':''}" onclick="setLibFilter('all')">All (${cams.length})</button>` +
+    brands.map(b => {
+      const count = cams.filter(c => c.brand === b).length;
+      return `<button class="lib-filter ${libraryFilter===b?'active':''}" onclick="setLibFilter('${b}')">${b} (${count})</button>`;
+    }).join('');
+
+  // Filter cameras
+  const filtered = libraryFilter === 'all' ? cams : cams.filter(c => c.brand === libraryFilter);
+  // Sort by price
+  filtered.sort((a, b) => a.price - b.price);
+
+  const gridEl = document.getElementById('library-grid');
+  if (filtered.length === 0) {
+    gridEl.innerHTML = '<div class="library-empty">No cameras found.</div>';
+    return;
+  }
+  gridEl.innerHTML = filtered.map(cam => {
+    const isSelected = librarySelected.includes(cam.id);
+    const specs = [cam.sensorSize, cam.maxVideoResolution, cam.frameRates[0]].filter(Boolean);
+    return `<div class="lib-card ${isSelected?'selected':''}" onclick="toggleLibSelect('${cam.id}',event)">
+      <div class="lib-check">${isSelected?'✓':''}</div>
+      <div class="lib-card-img">📷</div>
+      <div class="lib-card-brand">${cam.brand}</div>
+      <div class="lib-card-name">${cam.name.replace(cam.brand+' ','')}</div>
+      <div class="lib-card-price">$${cam.price.toLocaleString()}</div>
+      <div class="lib-card-specs">${specs.map(s => `<span>${s}</span>`).join('')}</div>
+      <div class="lib-card-actions">
+        <button class="btn btn-secondary btn-sm" style="flex:1;font-size:12px" onclick="event.stopPropagation();showKit('${cam.id}')">View Details</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  updateCompareBar();
+}
+
+function setLibFilter(brand) {
+  libraryFilter = brand;
+  renderLibrary();
+}
+
+function toggleLibSelect(camId, event) {
+  // Don't toggle if they clicked a button inside the card
+  if (event && event.target.closest('button')) return;
+  const idx = librarySelected.indexOf(camId);
+  if (idx > -1) {
+    librarySelected.splice(idx, 1);
+  } else {
+    if (librarySelected.length >= 3) {
+      showToast('Max 3 cameras to compare');
+      return;
+    }
+    librarySelected.push(camId);
+  }
+  renderLibrary();
+}
+
+function updateCompareBar() {
+  const bar = document.getElementById('library-compare-bar');
+  const chips = document.getElementById('lcb-chips');
+  if (librarySelected.length === 0) {
+    bar.classList.remove('visible');
+    return;
+  }
+  bar.classList.add('visible');
+  chips.innerHTML = librarySelected.map(id => {
+    const cam = DB.cameras.find(c => c.id === id);
+    return `<div class="lcb-chip"><span>${cam.name}</span><span class="lcb-remove" onclick="removeLibSelect('${id}')">×</span></div>`;
+  }).join('');
+  document.getElementById('lcb-compare-btn').textContent = librarySelected.length >= 2 ? `Compare (${librarySelected.length})` : 'Select at least 2';
+  document.getElementById('lcb-compare-btn').disabled = librarySelected.length < 2;
+}
+
+function removeLibSelect(camId) {
+  librarySelected = librarySelected.filter(id => id !== camId);
+  renderLibrary();
+}
+
+function libraryCompare() {
+  if (librarySelected.length < 2) return;
+  // Build a comparison table using the same format as quiz results
+  const cams = librarySelected.map(id => DB.cameras.find(c => c.id === id));
+  let html = '<button class="kit-back" onclick="showLibrary()">← Back to Library</button>';
+  html += '<h2 style="font-size:clamp(22px,4vw,30px);font-weight:800;letter-spacing:-1px;margin:20px 0 24px;text-align:center">Camera Comparison</h2>';
+  html += '<div style="overflow-x:auto"><table class="comparison-table"><thead><tr><th class="spec-label-col"></th>';
+  cams.forEach(cam => {
+    html += `<th><div class="cam-col-header"><div class="cam-col-img ${getBrandClass(cam.brand)}">${camImageHTML(cam,'sm')}</div><div class="cam-col-name">${cam.name}</div><div class="cam-col-price">$${cam.price.toLocaleString()}</div></div></th>`;
+  });
+  html += '</tr></thead><tbody>';
+  const kit = cams.map(c => getShootDayKit(c));
+  const specs = [
+    ['Sensor', c => c.sensorSize],
+    ['Resolution', c => c.maxVideoResolution],
+    ['Frame Rates', c => c.frameRates.join(', ')],
+    ['Bit Depth', c => c.bitDepth],
+    ['Autofocus', c => convertAutofocus(c.autofocus)],
+    ['Low Light', c => convertLowLight(c.lowLightPerformance)],
+    ['Stabilization', c => convertStabilization(c)],
+    ['Weight', c => c.weightGrams + 'g'],
+    ['Battery Life', c => c.batteryMinutes + ' min'],
+    ['Dual Slots', c => c.dualSlots ? '✓ Yes' : '✗ No'],
+    ['Photo Quality', c => c.photoCapable ? c.photoQuality : 'N/A'],
+    ['RAW Video', c => c.rawVideo ? '✓ Yes' : '✗ No'],
+    ['Mount', c => c.mount],
+    ['Card Type', c => c.cardType],
+    ['True Cost (8hr)', (c, i) => '$' + kit[i].totalOwnershipCost.toLocaleString()]
+  ];
+  specs.forEach(([label, fn]) => {
+    html += `<tr><td class="spec-label-col">${label}</td>`;
+    cams.forEach((cam, i) => {
+      html += `<td>${fn(cam, i)}</td>`;
+    });
+    html += '</tr>';
+  });
+  html += '<tr><td class="spec-label-col"></td>';
+  cams.forEach(cam => {
+    html += `<td><div class="cam-col-btn"><button class="btn btn-secondary btn-sm" onclick="showKit('${cam.id}')">View Details →</button></div></td>`;
+  });
+  html += '</tr></tbody></table></div>';
+
+  document.getElementById('library-compare-content').innerHTML = html;
+  showScreen('library-compare');
+}
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+updateGearBadge();
+</script>
+</body>
+</html>
