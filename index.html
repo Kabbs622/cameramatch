@@ -516,6 +516,16 @@ footer{padding:32px 24px;text-align:center;color:var(--text3);font-size:12px;bor
   .kit-budget-summary{padding:16px}
 }
 
+/* Roadmap */
+.roadmap-card{display:flex;align-items:flex-start;gap:14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;transition:border-color .2s}
+.roadmap-card:hover{border-color:var(--accent)}
+.roadmap-card.roadmap-planned{opacity:.7}
+.roadmap-card.roadmap-planned:hover{opacity:.85;border-color:var(--border2)}
+.roadmap-icon{font-size:22px;flex-shrink:0;margin-top:2px}
+.roadmap-title{font-size:15px;font-weight:700;margin-bottom:3px}
+.roadmap-desc{font-size:13px;color:var(--text2);line-height:1.4}
+@media(max-width:600px){#roadmap-screen .fade-up div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}}
+
 ::-webkit-scrollbar{width:6px}
 ::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:3px}
@@ -532,6 +542,7 @@ footer{padding:32px 24px;text-align:center;color:var(--text3);font-size:12px;bor
       <span class="nav-link" id="nav-results-link" style="display:none" onclick="showScreen('results')">📋 Results</span>
       <span class="nav-link" onclick="showLibrary()">Browse Cameras</span>
       <span class="nav-link" onclick="showScreen('gearlist')" id="nav-gearlist">📋 Gear List <span class="nav-badge" id="gearlist-badge" style="display:none">0</span></span>
+      <span class="nav-link" onclick="showScreen('roadmap')">🚀 What's Next</span>
       <span class="nav-link" onclick="showLoginModal()">Log in</span>
     </div>
   </div>
@@ -820,6 +831,52 @@ footer{padding:32px 24px;text-align:center;color:var(--text3);font-size:12px;bor
   <div class="library-compare-bar" id="library-compare-bar">
     <div class="lcb-chips" id="lcb-chips"></div>
     <button class="btn btn-primary btn-sm" id="lcb-compare-btn" onclick="libraryCompare()">Compare</button>
+  </div>
+</div>
+
+<!-- ROADMAP -->
+<div id="roadmap-screen" class="screen">
+  <div class="container" style="padding:100px 24px 60px;max-width:760px;margin:0 auto">
+    <button class="kit-back" onclick="goHome()">← Home</button>
+    <div class="fade-up" style="text-align:center;margin-bottom:48px">
+      <div class="hub-badge" style="margin-bottom:16px"><span class="dot"></span> Building in public</div>
+      <h2 style="font-size:clamp(28px,5vw,40px);font-weight:800;letter-spacing:-1px;margin-bottom:12px">What's Coming</h2>
+      <p style="color:var(--text2);font-size:16px;line-height:1.6;max-width:520px;margin:0 auto">This is an MVP. Here's what we're actively building and what's on the horizon.</p>
+    </div>
+
+    <div class="fade-up" style="animation-delay:.1s;margin-bottom:32px">
+      <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--accent2);margin-bottom:16px">🔥 Coming Soon</div>
+      <div style="display:grid;gap:12px">
+        <div class="roadmap-card"><span class="roadmap-icon">🔍</span><div><div class="roadmap-title">Lens Recommendations</div><div class="roadmap-desc">Matched to your camera and shooting style</div></div></div>
+        <div class="roadmap-card"><span class="roadmap-icon">💰</span><div><div class="roadmap-title">Real-Time Price Tracking</div><div class="roadmap-desc">See price history and get notified about sales</div></div></div>
+        <div class="roadmap-card"><span class="roadmap-icon">📧</span><div><div class="roadmap-title">Email Deal Alerts</div><div class="roadmap-desc">Get notified when your picks drop in price</div></div></div>
+        <div class="roadmap-card"><span class="roadmap-icon">💬</span><div><div class="roadmap-title">Feedback Form</div><div class="roadmap-desc">Tell us what to build next — we're listening</div></div></div>
+      </div>
+    </div>
+
+    <div class="fade-up" style="animation-delay:.2s;margin-bottom:32px">
+      <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--text3);margin-bottom:16px">📡 On the Radar</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="roadmap-card roadmap-planned"><span class="roadmap-icon">🎤</span><div><div class="roadmap-title">Audio Gear</div><div class="roadmap-desc">Mics & recorders for your setup</div></div></div>
+        <div class="roadmap-card roadmap-planned"><span class="roadmap-icon">💡</span><div><div class="roadmap-title">Lighting Kits</div><div class="roadmap-desc">Matched to your use case</div></div></div>
+        <div class="roadmap-card roadmap-planned"><span class="roadmap-icon">🎥</span><div><div class="roadmap-title">Gimbals & Stabilizers</div><div class="roadmap-desc">Weight-matched recommendations</div></div></div>
+        <div class="roadmap-card roadmap-planned"><span class="roadmap-icon">🖥️</span><div><div class="roadmap-title">Editing Builds</div><div class="roadmap-desc">Based on your codec & timeline</div></div></div>
+        <div class="roadmap-card roadmap-planned"><span class="roadmap-icon">👤</span><div><div class="roadmap-title">Accounts</div><div class="roadmap-desc">Save results & track prices</div></div></div>
+        <div class="roadmap-card roadmap-planned"><span class="roadmap-icon">📊</span><div><div class="roadmap-title">More Cameras</div><div class="roadmap-desc">Database growing regularly</div></div></div>
+      </div>
+    </div>
+
+    <div class="fade-up" style="animation-delay:.3s;margin-bottom:40px">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);padding:28px;text-align:center">
+        <div style="font-size:28px;margin-bottom:12px">🎯</div>
+        <h3 style="font-size:18px;font-weight:700;margin-bottom:10px">The Vision</h3>
+        <p style="color:var(--text2);font-size:14px;line-height:1.7;max-width:480px;margin:0 auto">We're building the most honest camera recommendation tool on the internet. No sponsored placements, no bias — just real specs matched to how you actually shoot. Built by filmmakers, for filmmakers.</p>
+      </div>
+    </div>
+
+    <div class="fade-up" style="animation-delay:.4s;text-align:center;padding-top:16px;border-top:1px solid var(--border)">
+      <p style="font-size:13px;color:var(--text3)">Built by <a href="https://c41cinema.com" target="_blank" style="color:var(--accent2)">C41 Cinema</a></p>
+    </div>
   </div>
 </div>
 
@@ -1799,7 +1856,30 @@ function setRating(n) {
 }
 
 function submitFeedback() {
-  showToast('Feedback coming soon!');
+  const type = document.getElementById('fb-type').value;
+  const message = document.getElementById('fb-message').value;
+  const email = document.getElementById('fb-email').value;
+  if (!type && !message) { showToast('Please select a type or write a message'); return; }
+  const entry = {
+    id: Date.now(),
+    timestamp: new Date().toISOString(),
+    sessionId: sessionId,
+    rating: feedbackRating,
+    type: type,
+    message: message,
+    email: email,
+    answers: Object.assign({}, answers),
+    url: window.location.href
+  };
+  const existing = JSON.parse(localStorage.getItem('cameramatch-feedback') || '[]');
+  existing.push(entry);
+  localStorage.setItem('cameramatch-feedback', JSON.stringify(existing));
+  showToast('✅ Feedback saved — thank you!');
+  document.getElementById('fb-type').value = '';
+  document.getElementById('fb-message').value = '';
+  document.getElementById('fb-email').value = '';
+  feedbackRating = 0;
+  document.querySelectorAll('#fb-rating button').forEach(b => b.classList.remove('active'));
   closeFeedback();
 }
 
