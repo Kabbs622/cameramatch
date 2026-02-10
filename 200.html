@@ -76,6 +76,7 @@ h1.hub-title{font-size:clamp(36px,6vw,56px);font-weight:800;letter-spacing:-1.5p
 
 .quiz-hub-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));gap:16px;max-width:720px;width:100%;padding:0 24px;position:relative}
 .quiz-hub-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);padding:28px;text-align:left;transition:all .3s ease;cursor:pointer;position:relative;overflow:hidden}
+.quiz-hub-card-primary{border-color:var(--accent);box-shadow:0 0 30px rgba(220,38,38,.15),0 0 60px rgba(220,38,38,.05)}
 .quiz-hub-card:hover{border-color:var(--accent);transform:translateY(-3px);box-shadow:0 8px 32px rgba(0,0,0,.3)}
 .quiz-hub-card.disabled{cursor:not-allowed;opacity:.5}
 .quiz-hub-card.disabled:hover{border-color:var(--border);transform:none;box-shadow:none}
@@ -601,14 +602,14 @@ footer{padding:32px 24px;text-align:center;color:var(--text3);font-size:12px;bor
   </div>
 
   <div class="quiz-hub-grid fade-up" style="animation-delay:.15s">
-    <div class="quiz-hub-card" onclick="startQuiz()">
+    <div class="quiz-hub-card quiz-hub-card-primary" onclick="startQuiz()">
       <div class="card-icon">⚡</div>
       <div class="card-title">Quick Match</div>
       <div class="card-desc">10 questions about how you shoot. We recommend your top cameras with full kit breakdowns.</div>
       <div class="card-meta">
-        <span class="card-badge">Ready</span>
         <span>~2 minutes</span>
       </div>
+      <button class="btn btn-primary" style="margin-top:16px;width:100%;font-size:15px;padding:14px 20px">Start the Quiz →</button>
     </div>
     <div class="quiz-hub-card disabled">
       <div class="card-icon">🔬</div>
