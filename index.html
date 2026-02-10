@@ -434,6 +434,22 @@ footer{padding:32px 24px;text-align:center;color:var(--text3);font-size:12px;bor
 /* Comparison table scroll wrapper */
 .comparison-scroll-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -24px;padding:0 24px}
 
+/* Mobile result cards (hidden on desktop, shown on mobile) */
+.mobile-results-cards{display:none}
+.mobile-result-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;cursor:pointer;transition:border-color .2s}
+.mobile-result-card:hover{border-color:var(--border2)}
+.mobile-result-card.top-pick-card{border-color:var(--accent);background:rgba(220,38,38,.03)}
+.mrc-header{display:flex;gap:16px;align-items:center;margin-bottom:16px}
+.mrc-image{width:80px;height:80px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;background:var(--surface2)}
+.mrc-image img{max-width:100%;max-height:100%;object-fit:contain}
+.mrc-name{font-size:16px;font-weight:700;letter-spacing:-.3px}
+.mrc-price{font-size:18px;font-weight:700;color:var(--green);margin-top:2px}
+.mrc-match{font-size:12px;font-weight:600;margin-top:2px}
+.mrc-specs{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mrc-spec{display:flex;justify-content:space-between;padding:6px 10px;background:var(--surface2);border-radius:6px;font-size:12px}
+.mrc-spec span:first-child{color:var(--text3);font-weight:500}
+.mrc-spec span:last-child{color:var(--text);font-weight:600;text-align:right}
+
 /* Hamburger menu for mobile */
 .nav-hamburger{display:none;background:none;border:none;color:var(--text);font-size:24px;cursor:pointer;padding:4px;font-family:inherit;line-height:1}
 
@@ -474,7 +490,9 @@ footer{padding:32px 24px;text-align:center;color:var(--text3);font-size:12px;bor
   .unified-comparison th.cam-col{min-width:140px;padding:12px 6px}
   .cam-col-name{font-size:12px}
   .cam-col-price{font-size:13px}
-  .unified-comparison::after{content:'← Swipe to compare →';display:block;text-align:center;font-size:11px;color:var(--text3);padding:8px 0;font-style:italic}
+  .unified-comparison::after{display:none}
+  .unified-comparison table{display:none}
+  .mobile-results-cards{display:flex;flex-direction:column;gap:16px}
 
   /* Library */
   .library-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
@@ -1542,7 +1560,43 @@ function _showResults() {
   });
   tableHTML += '</tr>';
   tableHTML += '</tbody></table>';
-  document.getElementById('unified-comparison').innerHTML = tableHTML;
+  
+  // Mobile card view (shown on small screens, table hidden)
+  let mobileCardsHTML = '<div class="mobile-results-cards">';
+  allCols.forEach((col) => {
+    const t = col.entry;
+    const cam = t.cam;
+    const needsScore = scoreCameraIgnoringBudget(cam, answers);
+    const maxNeedsScore = Math.max(...allCols.map(c => scoreCameraIgnoringBudget(c.entry.cam, answers)));
+    let pct = Math.max(65, Math.min(98, Math.round((needsScore / maxNeedsScore) * 98)));
+    if (col.type === 'top3' && col.idx > 0) pct = Math.max(65, pct - (col.idx * 5));
+    const isTop = col.type === 'top3' && col.idx === 0;
+    const kit = getShootDayKit(cam);
+    mobileCardsHTML += `
+      <div class="mobile-result-card ${isTop ? 'top-pick-card' : ''}" onclick="showKit('${cam.id}')">
+        <div class="mrc-header">
+          <div class="mrc-image ${getBrandClass(cam.brand)}">${camImageHTML(cam,'sm')}</div>
+          <div class="mrc-info">
+            <div class="mrc-name">${cam.name}${testedBadgeHTML(cam)}</div>
+            <div class="mrc-price">$${cam.price.toLocaleString()}</div>
+            <div class="mrc-match" style="color:${isTop ? 'var(--green)' : 'var(--accent2)'}">${pct}% match</div>
+            ${col.type === 'upsell' ? '<div style="font-size:10px;color:var(--green);margin-top:2px">🏆 If Budget Wasn\'t a Factor</div>' : ''}
+          </div>
+        </div>
+        <div class="mrc-specs">
+          <div class="mrc-spec"><span>Sensor</span><span>${cam.sensorSize}</span></div>
+          <div class="mrc-spec"><span>Video</span><span>${cam.maxVideoResolution} ${cam.bitDepth}</span></div>
+          <div class="mrc-spec"><span>AF</span><span>${cam.autofocus}</span></div>
+          <div class="mrc-spec"><span>Stabilization</span><span>${cam.stabilization ? 'Yes' : 'No'}</span></div>
+          <div class="mrc-spec"><span>Weight</span><span>${cam.weightGrams}g</span></div>
+          <div class="mrc-spec"><span>True Cost</span><span style="color:var(--amber)">$${kit.totalOwnershipCost.toLocaleString()}</span></div>
+        </div>
+        <button class="btn ${isTop ? 'btn-primary' : 'btn-secondary'} btn-sm" style="width:100%;margin-top:12px">View Details →</button>
+      </div>`;
+  });
+  mobileCardsHTML += '</div>';
+  
+  document.getElementById('unified-comparison').innerHTML = mobileCardsHTML + tableHTML;
 
   // Extra section: scoring link + save results (no more extra pick cards)
   let extraHTML = `
