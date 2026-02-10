@@ -1883,7 +1883,21 @@ function submitFeedback() {
   const existing = JSON.parse(localStorage.getItem('rigscout-feedback') || '[]');
   existing.push(entry);
   localStorage.setItem('rigscout-feedback', JSON.stringify(existing));
-  showToast('✅ Feedback saved — thank you!');
+  // Send to Formspree
+  fetch('https://formsubmit.co/ajax/kabbott622@gmail.com', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+    body: JSON.stringify({
+      _subject: 'RigScout Feedback: ' + (type || 'General'),
+      rating: feedbackRating,
+      type: type,
+      message: message,
+      email: email,
+      sessionId: sessionId,
+      timestamp: entry.timestamp
+    })
+  }).catch(() => {});
+  showToast('✅ Feedback sent — thank you!');
   document.getElementById('fb-type').value = '';
   document.getElementById('fb-message').value = '';
   document.getElementById('fb-email').value = '';
