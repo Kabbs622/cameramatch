@@ -624,14 +624,14 @@ footer{padding:32px 24px;text-align:center;color:var(--text3);font-size:12px;bor
   </div>
 
   <div class="quiz-hub-grid fade-up" style="animation-delay:.15s">
-    <div class="quiz-hub-card quiz-hub-card-primary" onclick="startQuiz()">
+    <div class="quiz-hub-card quiz-hub-card-primary" onclick="startQuiz(event)">
       <div class="card-icon">⚡</div>
       <div class="card-title">Quick Match</div>
       <div class="card-desc">15 questions about how you shoot. We recommend your top cameras with full kit breakdowns.</div>
       <div class="card-meta">
         <span>~3 minutes</span>
       </div>
-      <div class="btn btn-primary" style="margin-top:16px;width:100%;font-size:15px;padding:14px 20px;text-align:center">Start the Quiz →</div>
+      <div class="btn btn-primary" style="margin-top:16px;width:100%;font-size:15px;padding:14px 20px;text-align:center;pointer-events:none">Start the Quiz →</div>
     </div>
     <div class="quiz-hub-card disabled">
       <div class="card-icon">🔬</div>
@@ -1276,14 +1276,22 @@ let currentQuestion = 0;
 let answers = {};
 let topResults = [];
 
-function startQuiz() {
+function startQuiz(e) {
+  if (e) e.stopPropagation();
   currentQuestion = 0;
   answers = {};
-  showScreen('quiz');
+  // Force all screens hidden
+  document.querySelectorAll('.screen').forEach(s => { s.classList.remove('active'); s.style.display = 'none'; });
+  // Show quiz
+  const quizEl = document.getElementById('quiz-screen');
+  quizEl.style.display = 'block';
+  quizEl.classList.add('active');
+  document.body.classList.add('quiz-active');
+  window.scrollTo(0, 0);
   renderQuestion();
 }
 
-function exitQuiz() { goHome(); }
+function exitQuiz() { document.body.classList.remove('quiz-active'); goHome(); }
 
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => {
