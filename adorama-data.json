@@ -2,8 +2,14 @@
   {
     "id": "sony-fx3",
     "name": "Sony FX3A",
-    "adorama_status": "404",
-    "adorama_link": "https://www.adorama.com/isofx3a.html"
+    "adorama_status": "ok",
+    "adorama_title": "Sony FX3A Full-Frame Cinema Line Camera",
+    "adorama_price": "4298",
+    "adorama_rating": "",
+    "adorama_review_count": "",
+    "adorama_in_stock": "Yes",
+    "adorama_link": "https://www.adorama.com/soilmefx3a.html",
+    "adorama_sku": "SOILMEFX3A"
   },
   {
     "id": "sony-fx6",
@@ -19,8 +25,14 @@
   {
     "id": "sony-fx30",
     "name": "Sony FX30",
-    "adorama_status": "404",
-    "adorama_link": "https://www.adorama.com/isofx30.html"
+    "adorama_status": "ok",
+    "adorama_title": "Sony FX30 Super 35 Cinema Line Camera",
+    "adorama_price": "1798",
+    "adorama_rating": "",
+    "adorama_review_count": "",
+    "adorama_in_stock": "Yes",
+    "adorama_link": "https://www.adorama.com/soilmefx30b.html",
+    "adorama_sku": "SOILMEFX30B"
   },
   {
     "id": "sony-a7siii",
@@ -36,8 +48,14 @@
   {
     "id": "sony-a7cii",
     "name": "Sony A7C II",
-    "adorama_status": "404",
-    "adorama_link": "https://www.adorama.com/isoa7c2b.html"
+    "adorama_status": "ok",
+    "adorama_title": "Sony Alpha a7C II Mirrorless Camera, Black",
+    "adorama_price": "2298",
+    "adorama_rating": "",
+    "adorama_review_count": "",
+    "adorama_in_stock": "Yes",
+    "adorama_link": "https://www.adorama.com/isoa7cm2b.html",
+    "adorama_sku": "ISOA7CM2B"
   },
   {
     "id": "sony-a7iv",
@@ -49,6 +67,18 @@
     "adorama_review_count": "",
     "adorama_in_stock": "Yes",
     "adorama_link": "https://www.adorama.com/isoa7m4.html"
+  },
+  {
+    "id": "sony-a7v",
+    "name": "Sony A7 V",
+    "adorama_status": "needs_url",
+    "adorama_title": "",
+    "adorama_price": "",
+    "adorama_rating": "",
+    "adorama_review_count": "",
+    "adorama_in_stock": "",
+    "adorama_link": "",
+    "adorama_note": "Need to find correct Adorama URL"
   },
   {
     "id": "sony-zve10ii",
@@ -87,7 +117,7 @@
     "id": "canon-r5c",
     "name": "Canon EOS R5 C",
     "adorama_status": "ok",
-    "adorama_title": "Canon EOS R5 Mirrorless Digital Camera Body",
+    "adorama_title": "Canon EOS R5 C Cinema EOS Camera",
     "adorama_price": "3899",
     "adorama_rating": "",
     "adorama_review_count": "",
@@ -139,15 +169,28 @@
     "adorama_link": "https://www.adorama.com/car50.html"
   },
   {
+    "id": "canon-r100",
+    "name": "Canon EOS R100",
+    "adorama_status": "ok",
+    "adorama_title": "Canon EOS R100 Mirrorless Camera",
+    "adorama_price": "459",
+    "adorama_rating": "",
+    "adorama_review_count": "",
+    "adorama_in_stock": "Yes",
+    "adorama_link": "https://www.adorama.com/car100.html",
+    "adorama_sku": "CAR100"
+  },
+  {
     "id": "canon-c70",
     "name": "Canon EOS C70",
     "adorama_status": "ok",
-    "adorama_title": "",
-    "adorama_price": "",
+    "adorama_title": "Canon EOS C70 Digital Camera Body, RF Mount",
+    "adorama_price": "3499",
     "adorama_rating": "",
     "adorama_review_count": "",
-    "adorama_in_stock": "",
-    "adorama_link": "https://www.adorama.com/cac70.html"
+    "adorama_in_stock": "Yes",
+    "adorama_link": "https://www.adorama.com/cac70rf.html",
+    "adorama_sku": "CAC70RF"
   },
   {
     "id": "canon-c80",
@@ -185,53 +228,75 @@
   {
     "id": "panasonic-gh7",
     "name": "Panasonic Lumix GH7",
-    "adorama_status": "404",
-    "adorama_link": "https://www.adorama.com/pcgh7.html"
+    "adorama_status": "discontinued",
+    "adorama_title": "Panasonic LUMIX GH7 Mirrorless Camera",
+    "adorama_price": "",
+    "adorama_rating": "",
+    "adorama_review_count": "",
+    "adorama_in_stock": "No",
+    "adorama_link": "https://www.adorama.com/ipcdcgh7.html",
+    "adorama_sku": "IPCDCGH7",
+    "adorama_note": "Page says 'This item is no longer available'"
   },
   {
     "id": "panasonic-g9ii",
     "name": "Panasonic Lumix G9 II",
     "adorama_status": "ok",
-    "adorama_title": "",
-    "adorama_price": "",
+    "adorama_title": "Panasonic LUMIX G9II Mirrorless Camera",
+    "adorama_price": "1497",
     "adorama_rating": "",
     "adorama_review_count": "",
-    "adorama_in_stock": "",
-    "adorama_link": "https://www.adorama.com/pcg9m2.html"
+    "adorama_in_stock": "Yes",
+    "adorama_link": "https://www.adorama.com/ipcg9m2.html",
+    "adorama_sku": "IPCG9M2"
   },
   {
     "id": "blackmagic-pocket4k",
     "name": "Blackmagic Pocket Cinema Camera 4K",
-    "adorama_status": "404",
-    "adorama_link": "https://www.adorama.com/bmpccam4k.html"
+    "adorama_status": "ok",
+    "adorama_title": "Blackmagic Design Pocket Cinema Camera 4K",
+    "adorama_price": "1185",
+    "adorama_rating": "",
+    "adorama_review_count": "",
+    "adorama_in_stock": "Yes",
+    "adorama_link": "https://www.adorama.com/bmccp4k.html",
+    "adorama_sku": "BMCCP4K"
   },
   {
     "id": "blackmagic-pocket6kg2",
     "name": "Blackmagic Pocket Cinema Camera 6K G2",
-    "adorama_status": "404",
-    "adorama_link": "https://www.adorama.com/bmpcc6kg2.html"
+    "adorama_status": "ok",
+    "adorama_title": "Blackmagic Design Pocket Cinema Camera 6K G2",
+    "adorama_price": "2375",
+    "adorama_rating": "",
+    "adorama_review_count": "",
+    "adorama_in_stock": "Yes",
+    "adorama_link": "https://www.adorama.com/bmccp6kefg2.html",
+    "adorama_sku": "BMCCP6KEFG2"
   },
   {
     "id": "blackmagic-cc6k",
     "name": "Blackmagic Cinema Camera 6K",
     "adorama_status": "ok",
-    "adorama_title": "",
-    "adorama_price": "",
+    "adorama_title": "Blackmagic Design Cinema Camera 6K",
+    "adorama_price": "3089",
     "adorama_rating": "",
     "adorama_review_count": "",
-    "adorama_in_stock": "",
-    "adorama_link": "https://www.adorama.com/bmcc6k.html"
+    "adorama_in_stock": "Yes",
+    "adorama_link": "https://www.adorama.com/bmcc6k.html",
+    "adorama_sku": "BMCC6K"
   },
   {
     "id": "blackmagic-pyxis",
     "name": "Blackmagic PYXIS 6K",
     "adorama_status": "ok",
-    "adorama_title": "",
-    "adorama_price": "",
+    "adorama_title": "Blackmagic Design PYXIS 6K Cinema Camera, L-Mount",
+    "adorama_price": "3295",
     "adorama_rating": "",
     "adorama_review_count": "",
-    "adorama_in_stock": "",
-    "adorama_link": "https://www.adorama.com/bmpyxis6k.html"
+    "adorama_in_stock": "Yes",
+    "adorama_link": "https://www.adorama.com/bmdpyx6k.html",
+    "adorama_sku": "BMDPYX6K"
   },
   {
     "id": "fujifilm-xh2s",
@@ -270,23 +335,25 @@
     "id": "fujifilm-xs20",
     "name": "Fujifilm X-S20",
     "adorama_status": "ok",
-    "adorama_title": "",
-    "adorama_price": "",
+    "adorama_title": "Fujifilm X-S20 Mirrorless Camera, Black",
+    "adorama_price": "1499",
     "adorama_rating": "",
     "adorama_review_count": "",
-    "adorama_in_stock": "",
-    "adorama_link": "https://www.adorama.com/ifjxs20.html"
+    "adorama_in_stock": "Yes",
+    "adorama_link": "https://www.adorama.com/ifjxs20b.html",
+    "adorama_sku": "IFJXS20B"
   },
   {
     "id": "nikon-z6iii",
     "name": "Nikon Z6 III",
     "adorama_status": "ok",
-    "adorama_title": "",
-    "adorama_price": "",
+    "adorama_title": "Nikon Z6III Mirrorless Camera",
+    "adorama_price": "2096",
     "adorama_rating": "",
     "adorama_review_count": "",
-    "adorama_in_stock": "",
-    "adorama_link": "https://www.adorama.com/nkz6m3.html"
+    "adorama_in_stock": "Yes",
+    "adorama_link": "https://www.adorama.com/nkz6m3.html",
+    "adorama_sku": "NKZ6M3"
   },
   {
     "id": "nikon-z8",
@@ -314,28 +381,37 @@
     "id": "dji-osmo-pocket3",
     "name": "DJI Osmo Pocket 3",
     "adorama_status": "ok",
-    "adorama_title": "DJI Part 3 Tripod for Osmo Handheld 4K Camera and 3-Axis Gimbal",
-    "adorama_price": "39",
+    "adorama_title": "DJI Osmo Pocket 3 Gimbal Vlogging Camera",
+    "adorama_price": "499",
     "adorama_rating": "",
     "adorama_review_count": "",
     "adorama_in_stock": "Yes",
-    "adorama_link": "https://www.adorama.com/djiosmop3.html"
+    "adorama_link": "https://www.adorama.com/djiop3.html",
+    "adorama_sku": "DJIOP3"
   },
   {
     "id": "gopro-hero13",
     "name": "GoPro HERO13 Black",
-    "adorama_status": "404",
-    "adorama_link": "https://www.adorama.com/gpchdhx131.html"
+    "adorama_status": "ok",
+    "adorama_title": "GoPro HERO13 Black Camera",
+    "adorama_price": "329",
+    "adorama_rating": "",
+    "adorama_review_count": "",
+    "adorama_in_stock": "Yes",
+    "adorama_link": "https://www.adorama.com/gphero13.html",
+    "adorama_sku": "GPHERO13"
   },
   {
     "id": "red-komodo",
     "name": "RED KOMODO 6K",
-    "adorama_status": "ok",
-    "adorama_title": "",
+    "adorama_status": "discontinued",
+    "adorama_title": "RED Digital Cinema KOMODO 6K Camera",
     "adorama_price": "",
     "adorama_rating": "",
     "adorama_review_count": "",
-    "adorama_in_stock": "",
-    "adorama_link": "https://www.adorama.com/rdkomodo6k.html"
+    "adorama_in_stock": "No",
+    "adorama_link": "https://www.adorama.com/rd7100333.html",
+    "adorama_sku": "RD7100333",
+    "adorama_note": "Discontinued. Used from $2,595"
   }
 ]
