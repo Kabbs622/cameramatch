@@ -87,9 +87,10 @@
     "adorama_title": "Sony Alpha ZV-E10 II Mirrorless Camera Black",
     "adorama_price": "998",
     "adorama_rating": "1",
-    "adorama_review_count": "",
+    "adorama_review_count": "0",
     "adorama_in_stock": "Yes",
-    "adorama_link": "https://www.adorama.com/isozve10m2b.html"
+    "adorama_link": "https://www.adorama.com/isozve10m2b.html",
+    "adorama_note": "No reviews found in Adorama listings"
   },
   {
     "id": "sony-a6700",
@@ -175,10 +176,11 @@
     "adorama_title": "Canon EOS R100 Mirrorless Camera",
     "adorama_price": "459",
     "adorama_rating": "",
-    "adorama_review_count": "",
+    "adorama_review_count": "0",
     "adorama_in_stock": "Yes",
     "adorama_link": "https://www.adorama.com/car100.html",
-    "adorama_sku": "CAR100"
+    "adorama_sku": "CAR100",
+    "adorama_note": "No reviews found in Adorama listings"
   },
   {
     "id": "canon-c70",
@@ -199,9 +201,10 @@
     "adorama_title": "Canon EOS C80 Cinema Camera",
     "adorama_price": "5499",
     "adorama_rating": "",
-    "adorama_review_count": "",
+    "adorama_review_count": "0",
     "adorama_in_stock": "Yes",
-    "adorama_link": "https://www.adorama.com/cac80.html"
+    "adorama_link": "https://www.adorama.com/cac80.html",
+    "adorama_note": "No reviews found in Adorama listings"
   },
   {
     "id": "panasonic-s5iix",
@@ -232,7 +235,7 @@
     "adorama_title": "Panasonic LUMIX GH7 Mirrorless Camera",
     "adorama_price": "",
     "adorama_rating": "",
-    "adorama_review_count": "",
+    "adorama_review_count": "0",
     "adorama_in_stock": "No",
     "adorama_link": "https://www.adorama.com/ipcdcgh7.html",
     "adorama_sku": "IPCDCGH7",
@@ -269,10 +272,11 @@
     "adorama_title": "Blackmagic Design Pocket Cinema Camera 6K G2",
     "adorama_price": "2375",
     "adorama_rating": "",
-    "adorama_review_count": "",
+    "adorama_review_count": "0",
     "adorama_in_stock": "Yes",
     "adorama_link": "https://www.adorama.com/bmccp6kefg2.html",
-    "adorama_sku": "BMCCP6KEFG2"
+    "adorama_sku": "BMCCP6KEFG2",
+    "adorama_note": "No reviews found in Adorama listings"
   },
   {
     "id": "blackmagic-cc6k",
@@ -281,10 +285,11 @@
     "adorama_title": "Blackmagic Design Cinema Camera 6K",
     "adorama_price": "3089",
     "adorama_rating": "",
-    "adorama_review_count": "",
+    "adorama_review_count": "0",
     "adorama_in_stock": "Yes",
     "adorama_link": "https://www.adorama.com/bmcc6k.html",
-    "adorama_sku": "BMCC6K"
+    "adorama_sku": "BMCC6K",
+    "adorama_note": "No reviews found in Adorama listings"
   },
   {
     "id": "blackmagic-pyxis",
@@ -293,7 +298,7 @@
     "adorama_title": "Blackmagic Design PYXIS 6K Cinema Camera, L-Mount",
     "adorama_price": "3295",
     "adorama_rating": "",
-    "adorama_review_count": "",
+    "adorama_review_count": "2",
     "adorama_in_stock": "Yes",
     "adorama_link": "https://www.adorama.com/bmdpyx6k.html",
     "adorama_sku": "BMDPYX6K"
@@ -316,9 +321,10 @@
     "adorama_title": "Fujifilm X-H2 Mirrorless Camera, Black",
     "adorama_price": "2299",
     "adorama_rating": "5",
-    "adorama_review_count": "",
+    "adorama_review_count": "0",
     "adorama_in_stock": "Yes",
-    "adorama_link": "https://www.adorama.com/ifjxh2.html"
+    "adorama_link": "https://www.adorama.com/ifjxh2.html",
+    "adorama_note": "No reviews found in Adorama listings"
   },
   {
     "id": "fujifilm-xt5",
@@ -338,10 +344,11 @@
     "adorama_title": "Fujifilm X-S20 Mirrorless Camera, Black",
     "adorama_price": "1499",
     "adorama_rating": "",
-    "adorama_review_count": "",
+    "adorama_review_count": "0",
     "adorama_in_stock": "Yes",
     "adorama_link": "https://www.adorama.com/ifjxs20b.html",
-    "adorama_sku": "IFJXS20B"
+    "adorama_sku": "IFJXS20B",
+    "adorama_note": "No reviews found in Adorama listings"
   },
   {
     "id": "nikon-z6iii",
@@ -373,9 +380,10 @@
     "adorama_title": "Nikon Z50II Mirrorless Camera",
     "adorama_price": "1006",
     "adorama_rating": "4.5",
-    "adorama_review_count": "",
+    "adorama_review_count": "0",
     "adorama_in_stock": "Yes",
-    "adorama_link": "https://www.adorama.com/nkz50m2.html"
+    "adorama_link": "https://www.adorama.com/nkz50m2.html",
+    "adorama_note": "No reviews found in Adorama listings"
   },
   {
     "id": "dji-osmo-pocket3",
@@ -408,7 +416,7 @@
     "adorama_title": "RED Digital Cinema KOMODO 6K Camera",
     "adorama_price": "",
     "adorama_rating": "",
-    "adorama_review_count": "",
+    "adorama_review_count": "0",
     "adorama_in_stock": "No",
     "adorama_link": "https://www.adorama.com/rd7100333.html",
     "adorama_sku": "RD7100333",
