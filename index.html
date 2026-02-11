@@ -1261,13 +1261,13 @@ const QUESTIONS = [
 {id:'autofocus',q:"How much do you rely on autofocus?",opts:['It has to be rock solid','Nice to have, but I can pull focus','I prefer manual focus']},
 {id:'photo',q:"Do you shoot stills too?",opts:['Yes, stills are just as important','Occasionally','Nope, video only']},
 {id:'size',q:"Does the size of the camera matter?",opts:['Small and light is a must','I prefer compact but can deal with bigger','Doesn\'t matter, give me the best image']},
-{id:'slowmo',q:"Do you need slow motion?",opts:['Yes, 4K 120fps is a must','Nice to have','Not really']},
+{id:'slowmo',q:"How much slow motion do you need?",opts:['Super slow-mo (4K 120fps+)','Some slow-mo (60fps is enough)','Not really']},
 {id:'lowlight',q:"How often are you shooting in low light?",opts:['All the time','Sometimes','Rarely']},
 {id:'stabilization',q:"How important is in-body stabilization (IBIS)?",opts:['Essential — I shoot handheld a lot','Nice to have but I own a gimbal','Don\'t care — I use tripods/rigs']},
 {id:'ndfilter',q:"Do you need built-in ND filters?",opts:['Yes, I shoot run-and-gun outdoors','Would be nice','Not important']},
 {id:'colorgrade',q:"How much do you color grade?",opts:['Heavy grading — I want RAW or Log','Light grading — just need a good starting point','Minimal — I want great color straight out of camera']},
 {id:'recording',q:"Any preference on recording media?",opts:['SD cards — cheap and easy','CFexpress — I want the best quality','Whatever gets the job done']},
-{id:'battery',q:"How important is battery life?",opts:['Critical — I shoot all day','Moderate — I can swap batteries','Not a big deal']}
+{id:'dualuse',q:"Will this be your only camera?",opts:['Yes, it needs to do everything','No, I have other cameras for different jobs','Buying my first camera']}
 ];
 
 const BUDGET_RANGES = [[0,1000],[1000,2000],[2000,4000],[4000,6000],[6000,100000]];
@@ -1560,11 +1560,13 @@ function scoreCamera(cam, ans) {
   }
 
   // Slow-mo
-  if (ans.slowmo === 'Yes, 4K 120fps is a must') {
+  if (ans.slowmo === 'Super slow-mo (4K 120fps+)') {
     if (cam.frameRates.some(f => f.includes('4K120'))) score += 10;
+    else if (cam.frameRates.some(f => f.includes('120'))) score += 3;
     else score -= 5;
-  } else if (ans.slowmo === 'Nice to have' && cam.frameRates.some(f => f.includes('120'))) {
-    score += 4;
+  } else if (ans.slowmo === 'Some slow-mo (60fps is enough)') {
+    if (cam.frameRates.some(f => f.includes('60'))) score += 5;
+    else score -= 2;
   }
 
   // Low light
@@ -1611,11 +1613,19 @@ function scoreCamera(cam, ans) {
     if (cam.cardType && cam.cardType.includes('CFexpress')) score += 5;
   }
 
-  // Battery life
-  if (ans.battery === 'Critical — I shoot all day') {
-    if (cam.batteryLife === 'excellent') score += 8;
-    else if (cam.batteryLife === 'good') score += 4;
-    else if (cam.batteryLife === 'poor') score -= 5;
+  // Dual use / only camera
+  if (ans.dualuse === 'Yes, it needs to do everything') {
+    // Versatile cameras score higher — photo capable, good AF, stabilization
+    if (cam.photoCapable && cam.photoQuality !== 'none') score += 4;
+    if (cam.autofocus === 'excellent') score += 3;
+    if (cam.stabilization) score += 3;
+    if (cam.primaryUseCases.length >= 4) score += 3;
+  } else if (ans.dualuse === 'Buying my first camera') {
+    // Beginner-friendly: AF, stabilization, photo capable, lighter
+    if (cam.experienceLevel.includes('beginner')) score += 6;
+    if (cam.autofocus === 'excellent' || cam.autofocus === 'good') score += 3;
+    if (cam.stabilization) score += 3;
+    if (cam.photoCapable) score += 3;
   }
 
   // Dual slots bonus
@@ -1882,7 +1892,8 @@ function scoreCameraIgnoringBudget(cam, ans) {
     if (cam.photoCapable && cam.photoQuality === 'exceptional') score += 10; else if (cam.photoCapable && cam.photoQuality === 'excellent') score += 8; else if (cam.photoCapable) score += 4; else score -= 8;
   }
   if (ans.size === 'Small and light is a must') { if (cam.weightGrams < 500) score += 8; else if (cam.weightGrams < 700) score += 4; else score -= 4; }
-  if (ans.slowmo === 'Yes, 4K 120fps is a must') { if (cam.frameRates.some(f => f.includes('4K120'))) score += 10; else score -= 5; }
+  if (ans.slowmo === 'Super slow-mo (4K 120fps+)') { if (cam.frameRates.some(f => f.includes('4K120'))) score += 10; else if (cam.frameRates.some(f => f.includes('120'))) score += 3; else score -= 5; }
+  else if (ans.slowmo === 'Some slow-mo (60fps is enough)') { if (cam.frameRates.some(f => f.includes('60'))) score += 5; else score -= 2; }
   if (ans.lowlight === 'All the time') { if (cam.lowLightPerformance === 'excellent') score += 10; else if (cam.lowLightPerformance === 'good') score += 5; else score -= 3; }
   if (ans.stabilization === 'Essential — I shoot handheld a lot') { if (cam.stabilization) score += 10; else score -= 6; }
   else if (ans.stabilization === 'Nice to have but I own a gimbal') { if (cam.stabilization) score += 3; }
@@ -1893,7 +1904,8 @@ function scoreCameraIgnoringBudget(cam, ans) {
   else if (ans.colorgrade === 'Minimal — I want great color straight out of camera') { if (cam.rawVideo && !cam.photoCapable) score -= 2; score += 3; }
   if (ans.recording === 'SD cards — cheap and easy') { if (cam.cardType && cam.cardType.includes('SD')) score += 5; else score -= 2; }
   else if (ans.recording === 'CFexpress — I want the best quality') { if (cam.cardType && cam.cardType.includes('CFexpress')) score += 5; }
-  if (ans.battery === 'Critical — I shoot all day') { if (cam.batteryLife === 'excellent') score += 8; else if (cam.batteryLife === 'good') score += 4; else if (cam.batteryLife === 'poor') score -= 5; }
+  if (ans.dualuse === 'Yes, it needs to do everything') { if (cam.photoCapable) score += 4; if (cam.autofocus === 'excellent') score += 3; if (cam.stabilization) score += 3; if (cam.primaryUseCases.length >= 4) score += 3; }
+  else if (ans.dualuse === 'Buying my first camera') { if (cam.experienceLevel.includes('beginner')) score += 6; if (cam.autofocus === 'excellent' || cam.autofocus === 'good') score += 3; if (cam.stabilization) score += 3; if (cam.photoCapable) score += 3; }
   if (cam.dualSlots) score += 3;
   if (cam.rawVideo && selectedCases.some(sc => ['narrative film','commercial','music video'].includes(sc))) score += 3;
   if (cam.maxVideoResolution === '8K') score += 3; else if (['6K','6.2K','5.7K'].includes(cam.maxVideoResolution)) score += 2;
@@ -2248,8 +2260,10 @@ function explainMissedCamera(camId) {
   }
 
   // Slow mo
-  if (answers.slowmo === 'Yes, 4K 120fps is a must' && !cam.frameRates.some(f => f.includes('4K120'))) {
+  if (answers.slowmo === 'Super slow-mo (4K 120fps+)' && !cam.frameRates.some(f => f.includes('4K120'))) {
     reasons.push({type:'negative', icon:'🎥', text:`No 4K 120fps — max is ${cam.frameRates[0]}`});
+  } else if (answers.slowmo === 'Some slow-mo (60fps is enough)' && !cam.frameRates.some(f => f.includes('60'))) {
+    reasons.push({type:'negative', icon:'🎥', text:`Limited slow-mo — max is ${cam.frameRates[0]}`});
   }
 
   // Low light
@@ -2279,9 +2293,12 @@ function explainMissedCamera(camId) {
     reasons.push({type:'positive', icon:'🎨', text:`Internal RAW recording for maximum grading flexibility`});
   }
 
-  // Battery
-  if (answers.battery === 'Critical — I shoot all day' && cam.batteryLife === 'poor') {
-    reasons.push({type:'negative', icon:'🔋', text:`Battery life rated "poor" (~${cam.batteryMinutes} min) — not ideal for all-day shoots`});
+  // Dual use
+  if (answers.dualuse === 'Yes, it needs to do everything' && !cam.photoCapable) {
+    reasons.push({type:'negative', icon:'🔄', text:`Video only — can't shoot stills, and you need it to do everything`});
+  }
+  if (answers.dualuse === 'Buying my first camera' && !cam.experienceLevel.includes('beginner')) {
+    reasons.push({type:'neutral', icon:'🎓', text:`Aimed at ${cam.experienceLevel.join('/')} users — might have a steeper learning curve`});
   }
 
   // Score comparison
