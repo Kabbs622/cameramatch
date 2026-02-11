@@ -97,4 +97,29 @@ Kyle should sign up for Amazon Associates (affiliate program) if not already. Be
 
 ---
 
+## Amazon Scraping Test Results
+
+### web_fetch on product pages:
+- **Rating**: ✅ Extractable ("5.0 out of 5 stars" appears in text)
+- **Review count**: ❌ NOT in readable text (rendered by JS)
+- **Review highlights**: ✅ Full AI summary + individual reviews
+- **Reliability**: ~50% — some ASINs return 404, others work fine
+- **Price**: ❌ Not in readable text
+
+### curl on product pages:
+- Returns 5KB CAPTCHA page — blocked
+
+### Amazon search results:
+- Returns ad tracking garbage via web_fetch — not usable
+
+### Conclusion:
+Amazon product data requires either:
+1. **Amazon Associates API** (Creators API) — official, free, returns everything
+2. **Third-party scraping API** (ScraperAPI, Scrapingdog) — handles anti-bot
+3. **Browser automation** — works but slow and gets blocked after a few pages
+
+**The Amazon Associates API is clearly the winner** — it's free, official, returns structured JSON with price/rating/reviews, AND generates affiliate revenue.
+
+---
+
 *Last updated: 2026-02-10*
