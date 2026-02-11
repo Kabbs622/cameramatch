@@ -1158,7 +1158,7 @@ function ratingHTML(cam, size) {
   if (!avg) return '';
   const stars = '★'.repeat(Math.round(avg.rating)) + '☆'.repeat(5 - Math.round(avg.rating));
   const sz = size === 'sm' ? 'font-size:11px' : 'font-size:13px';
-  return `<div style="${sz};color:var(--text3);margin-top:2px"><span style="color:#f5c518;letter-spacing:1px">${stars}</span> <span style="font-weight:600">${avg.rating}</span> <span style="opacity:.7">(${avg.totalReviews.toLocaleString()} reviews)</span></div>`;
+  return `<div style="${sz};color:var(--text3);margin-top:2px;margin-bottom:8px"><span style="color:#f5c518;letter-spacing:1px">${stars}</span> <span style="font-weight:600">${avg.rating}</span> <span style="opacity:.7">(${avg.totalReviews.toLocaleString()} reviews)</span></div>`;
 }
 function getBrandClass(brand) {
   const b = brand.toLowerCase();
@@ -1373,17 +1373,20 @@ function scoreCamera(cam, ans) {
     else if (ownershipRatio < 0.9) score += 3;
   }
 
-  // Budget fit - sweet spot bonus (not too cheap, not maxing out)
+  // Budget fit - gentle curve, less dominant
   const range = budgetMax - budgetMin;
   const sweetSpot = budgetMin + range * 0.6;
   const dist = Math.abs(cam.price - sweetSpot) / range;
-  score += Math.max(0, (1 - dist) * 15);
+  score += Math.max(0, (1 - dist) * 8);
 
-  // Use case
+  // Use case — reward proportional to how many selected cases match
   const useCaseMap = {'Weddings & Events':'wedding','Commercials & Branded Content':'commercial',Documentary:'documentary','YouTube & Content Creation':'YouTube/content','Social Media':'social media','Music Videos':'music video','Narrative & Short Films':'narrative film','Action & Sports':'action/sports','A Bit of Everything':'everything'};
   const selectedCases = (ans.useCase || []).map(u => useCaseMap[u] || u.toLowerCase());
-  if (selectedCases.includes('everything') || selectedCases.some(sc => cam.primaryUseCases.some(pc => pc.toLowerCase().includes(sc)))) {
-    score += 20;
+  if (selectedCases.includes('everything')) {
+    score += 12;
+  } else {
+    const matchCount = selectedCases.filter(sc => cam.primaryUseCases.some(pc => pc.toLowerCase().includes(sc))).length;
+    if (matchCount > 0) score += 8 + Math.min(matchCount * 3, 12);
   }
 
   // Experience
@@ -1397,14 +1400,14 @@ function scoreCamera(cam, ans) {
 
   // AF
   if (ans.autofocus === 'It has to be rock solid') {
-    if (cam.autofocus === 'excellent') score += 12;
-    else if (cam.autofocus === 'good') score += 6;
+    if (cam.autofocus === 'excellent') score += 8;
+    else if (cam.autofocus === 'good') score += 4;
     else if (cam.autofocus === 'manual only') score -= 5;
   } else if (ans.autofocus === 'I prefer manual focus') {
-    score += 5;
+    score += 4;
   } else {
-    if (cam.autofocus === 'excellent') score += 8;
-    else if (cam.autofocus === 'good') score += 5;
+    if (cam.autofocus === 'excellent') score += 5;
+    else if (cam.autofocus === 'good') score += 3;
   }
 
   // Photo
@@ -1445,10 +1448,17 @@ function scoreCamera(cam, ans) {
   // Dual slots bonus
   if (cam.dualSlots) score += 3;
 
+  // RAW video bonus for narrative/film work
+  if (cam.rawVideo && selectedCases.some(sc => ['narrative film', 'commercial', 'music video'].includes(sc))) score += 5;
+
+  // Resolution bonus — higher res cameras get a slight edge for commercial work
+  if (cam.maxVideoResolution === '8K') score += 3;
+  else if (cam.maxVideoResolution === '6K' || cam.maxVideoResolution === '6.2K' || cam.maxVideoResolution === '5.7K') score += 2;
+
   // Brand loyalty (multi-select)
   const brandPicks = Array.isArray(ans.brandLoyalty) ? ans.brandLoyalty : (ans.brandLoyalty ? [ans.brandLoyalty] : []);
   if (brandPicks.length && !brandPicks.includes('Open to anything')) {
-    if (brandPicks.includes(cam.brand)) score += 15;
+    if (brandPicks.includes(cam.brand)) score += 12;
   }
 
   return score;
@@ -1684,13 +1694,14 @@ function scoreCameraIgnoringBudget(cam, ans) {
   let score = 0;
   const useCaseMap = {'Weddings & Events':'wedding','Commercials & Branded Content':'commercial',Documentary:'documentary','YouTube & Content Creation':'YouTube/content','Social Media':'social media','Music Videos':'music video','Narrative & Short Films':'narrative film','Action & Sports':'action/sports','A Bit of Everything':'everything'};
   const selectedCases = (ans.useCase || []).map(u => useCaseMap[u] || u.toLowerCase());
-  if (selectedCases.includes('everything') || selectedCases.some(sc => cam.primaryUseCases.some(pc => pc.toLowerCase().includes(sc)))) score += 20;
+  if (selectedCases.includes('everything')) { score += 12; }
+  else { const mc = selectedCases.filter(sc => cam.primaryUseCases.some(pc => pc.toLowerCase().includes(sc))).length; if (mc > 0) score += 8 + Math.min(mc * 3, 12); }
   const expMap = {'Just getting started':'beginner','1-2 years':'intermediate','3-5 years':'advanced','5+ years, this is my career':'professional'};
   if (cam.experienceLevel.includes(expMap[ans.experience] || 'intermediate')) score += 10;
   if (ans.crew === 'Mostly solo' && cam.soloOperatorFriendly) score += 8;
   if (ans.autofocus === 'It has to be rock solid') {
-    if (cam.autofocus === 'excellent') score += 12; else if (cam.autofocus === 'good') score += 6; else if (cam.autofocus === 'manual only') score -= 5;
-  } else if (ans.autofocus === 'I prefer manual focus') { score += 5; } else { if (cam.autofocus === 'excellent') score += 8; else if (cam.autofocus === 'good') score += 5; }
+    if (cam.autofocus === 'excellent') score += 8; else if (cam.autofocus === 'good') score += 4; else if (cam.autofocus === 'manual only') score -= 5;
+  } else if (ans.autofocus === 'I prefer manual focus') { score += 4; } else { if (cam.autofocus === 'excellent') score += 5; else if (cam.autofocus === 'good') score += 3; }
   if (ans.photo === 'Yes, stills are just as important') {
     if (cam.photoCapable && cam.photoQuality === 'exceptional') score += 10; else if (cam.photoCapable && cam.photoQuality === 'excellent') score += 8; else if (cam.photoCapable) score += 4; else score -= 8;
   }
@@ -1699,9 +1710,11 @@ function scoreCameraIgnoringBudget(cam, ans) {
   if (ans.lowlight === 'All the time') { if (cam.lowLightPerformance === 'excellent') score += 10; else if (cam.lowLightPerformance === 'good') score += 5; else score -= 3; }
   if (cam.stabilization && ans.crew === 'Mostly solo') score += 5;
   if (cam.dualSlots) score += 3;
+  if (cam.rawVideo && selectedCases.some(sc => ['narrative film','commercial','music video'].includes(sc))) score += 5;
+  if (cam.maxVideoResolution === '8K') score += 3; else if (['6K','6.2K','5.7K'].includes(cam.maxVideoResolution)) score += 2;
   const brandPicks2 = Array.isArray(ans.brandLoyalty) ? ans.brandLoyalty : (ans.brandLoyalty ? [ans.brandLoyalty] : []);
   if (brandPicks2.length && !brandPicks2.includes('Open to anything')) {
-    if (brandPicks2.includes(cam.brand)) score += 15;
+    if (brandPicks2.includes(cam.brand)) score += 12;
   }
   return score;
 }
