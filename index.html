@@ -189,6 +189,14 @@ h1.hub-title{font-size:clamp(36px,6vw,56px);font-weight:800;letter-spacing:-1.5p
 .mcr-reason{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;font-size:13px;line-height:1.5}
 .mcr-reason .mcr-icon{flex-shrink:0;font-size:16px;margin-top:1px}
 .mcr-reason.negative .mcr-icon{color:var(--red)}.mcr-reason.positive .mcr-icon{color:var(--green)}.mcr-reason.neutral .mcr-icon{color:var(--amber)}
+.budget-slider-wrap{padding:20px 10px 30px;max-width:480px;margin:0 auto}
+.budget-slider-label{text-align:center;font-size:28px;font-weight:800;color:var(--text);margin-bottom:24px;letter-spacing:-1px}
+.budget-slider-track{position:relative;height:6px;background:var(--border);border-radius:3px;margin:20px 0}
+.budget-slider-fill{position:absolute;height:100%;background:var(--accent2);border-radius:3px}
+.budget-slider-thumb{position:absolute;width:28px;height:28px;background:var(--accent2);border-radius:50%;top:50%;transform:translate(-50%,-50%);cursor:grab;border:3px solid var(--card);box-shadow:0 2px 8px rgba(0,0,0,.3);z-index:2;touch-action:none}
+.budget-slider-thumb:active{cursor:grabbing;transform:translate(-50%,-50%) scale(1.15)}
+.budget-slider-ticks{display:flex;justify-content:space-between;margin-top:12px;font-size:11px;color:var(--text3)}
+.budget-next-btn{display:block;margin:24px auto 0;width:200px}
 .cam-col-match{display:inline-block;font-size:12px;font-weight:600;color:var(--accent2);background:var(--accent-glow);padding:2px 8px;border-radius:6px;margin-bottom:4px}
 .cam-col-toppick{font-size:10px;font-weight:700;color:var(--accent2);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
 .cam-col-btn{margin-top:8px}
@@ -1327,6 +1335,24 @@ function renderQuestion() {
   document.getElementById('quiz-progress').style.width = `${((currentQuestion + 1) / total) * 100}%`;
   document.getElementById('quiz-back-btn').style.visibility = currentQuestion === 0 ? 'hidden' : 'visible';
 
+  // Budget slider
+  if (q.id === 'budget') {
+    const prev = answers.budget || {min: 500, max: 3000};
+    if (typeof prev === 'string') answers.budget = {min: 500, max: 3000}; // migrate from old format
+    const b = answers.budget || {min: 500, max: 3000};
+    let html = `<div class="question-num">Question ${currentQuestion + 1}</div>`;
+    html += `<div class="question-text">${q.q}</div>`;
+    html += `<div class="budget-slider-wrap">`;
+    html += `<div class="budget-slider-label" id="budget-label">$${b.min.toLocaleString()} — $${b.max.toLocaleString()}</div>`;
+    html += `<div class="budget-slider-track" id="budget-track"><div class="budget-slider-fill" id="budget-fill"></div><div class="budget-slider-thumb" id="budget-thumb-min"></div><div class="budget-slider-thumb" id="budget-thumb-max"></div></div>`;
+    html += `<div class="budget-slider-ticks"><span>$0</span><span>$2K</span><span>$4K</span><span>$6K</span><span>$8K+</span></div>`;
+    html += `</div>`;
+    html += `<button class="btn btn-primary budget-next-btn" onclick="advanceBudget()">Next →</button>`;
+    document.getElementById('question-wrap').innerHTML = html;
+    initBudgetSlider();
+    return;
+  }
+
   const isMulti = q.multi;
   const prev = answers[q.id];
 
@@ -1346,6 +1372,75 @@ function renderQuestion() {
   }
 
   document.getElementById('question-wrap').innerHTML = html;
+}
+
+const BUDGET_SLIDER_MIN = 0;
+const BUDGET_SLIDER_MAX = 8000;
+const BUDGET_STEP = 100;
+
+function initBudgetSlider() {
+  const track = document.getElementById('budget-track');
+  const thumbMin = document.getElementById('budget-thumb-min');
+  const thumbMax = document.getElementById('budget-thumb-max');
+  const fill = document.getElementById('budget-fill');
+  const label = document.getElementById('budget-label');
+  const b = answers.budget || {min: 500, max: 3000};
+
+  function valToPercent(v) { return ((v - BUDGET_SLIDER_MIN) / (BUDGET_SLIDER_MAX - BUDGET_SLIDER_MIN)) * 100; }
+  function percentToVal(p) { let v = BUDGET_SLIDER_MIN + (p / 100) * (BUDGET_SLIDER_MAX - BUDGET_SLIDER_MIN); return Math.round(v / BUDGET_STEP) * BUDGET_STEP; }
+
+  function updateUI() {
+    const pMin = valToPercent(b.min);
+    const pMax = valToPercent(b.max);
+    thumbMin.style.left = pMin + '%';
+    thumbMax.style.left = pMax + '%';
+    fill.style.left = pMin + '%';
+    fill.style.width = (pMax - pMin) + '%';
+    const maxLabel = b.max >= BUDGET_SLIDER_MAX ? '$8,000+' : '$' + b.max.toLocaleString();
+    label.textContent = '$' + b.min.toLocaleString() + ' — ' + maxLabel;
+    answers.budget = {min: b.min, max: b.max};
+  }
+
+  function makeDraggable(thumb, isMin) {
+    function onMove(clientX) {
+      const rect = track.getBoundingClientRect();
+      let pct = ((clientX - rect.left) / rect.width) * 100;
+      pct = Math.max(0, Math.min(100, pct));
+      let val = percentToVal(pct);
+      if (isMin) {
+        val = Math.min(val, b.max - BUDGET_STEP);
+        val = Math.max(BUDGET_SLIDER_MIN, val);
+        b.min = val;
+      } else {
+        val = Math.max(val, b.min + BUDGET_STEP);
+        val = Math.min(BUDGET_SLIDER_MAX, val);
+        b.max = val;
+      }
+      updateUI();
+    }
+    thumb.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      const move = (ev) => onMove(ev.clientX);
+      const up = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); };
+      document.addEventListener('mousemove', move);
+      document.addEventListener('mouseup', up);
+    });
+    thumb.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      const move = (ev) => onMove(ev.touches[0].clientX);
+      const up = () => { document.removeEventListener('touchmove', move); document.removeEventListener('touchend', up); };
+      document.addEventListener('touchmove', move, {passive: false});
+      document.addEventListener('touchend', up);
+    });
+  }
+  makeDraggable(thumbMin, true);
+  makeDraggable(thumbMax, false);
+  updateUI();
+}
+
+function advanceBudget() {
+  if (currentQuestion < QUESTIONS.length - 1) { currentQuestion++; renderQuestion(); }
+  else showResults();
 }
 
 function selectOption(idx) {
@@ -1388,24 +1483,31 @@ function advanceMulti() {
 // ═══════════════════════════════════════════
 function scoreCamera(cam, ans) {
   let score = 0;
-  const budgetIdx = QUESTIONS[0].opts.indexOf(ans.budget);
-  const budgetMax = BUDGET_RANGES[budgetIdx][1];
-  const budgetMin = BUDGET_RANGES[budgetIdx][0];
-  if (cam.price >= budgetMax) return -1;
+  // Budget — now a {min, max} range from slider
+  let budgetMin, budgetMax;
+  if (typeof ans.budget === 'object' && ans.budget.min !== undefined) {
+    budgetMin = ans.budget.min;
+    budgetMax = ans.budget.max >= 8000 ? 100000 : ans.budget.max;
+  } else {
+    // Fallback for old string format
+    const budgetIdx = QUESTIONS[0].opts.indexOf(ans.budget);
+    budgetMax = BUDGET_RANGES[budgetIdx] ? BUDGET_RANGES[budgetIdx][1] : 100000;
+    budgetMin = BUDGET_RANGES[budgetIdx] ? BUDGET_RANGES[budgetIdx][0] : 0;
+  }
+  if (cam.price > budgetMax) return -1;
 
   // Check total ownership cost (body + batteries + cards for 8hr day)
   if (cam.batteryMinutes) {
     const kit = getShootDayKit(cam);
     if (kit.totalOwnershipCost > budgetMax * 1.5) return -1;
-    // Bonus for cameras where total ownership is well under budget
     const ownershipRatio = kit.totalOwnershipCost / budgetMax;
     if (ownershipRatio < 0.7) score += 5;
     else if (ownershipRatio < 0.9) score += 3;
   }
 
-  // Budget fit - gentle curve, less dominant
-  const range = budgetMax - budgetMin;
-  const sweetSpot = budgetMin + range * 0.6;
+  // Budget fit — reward cameras near the sweet spot of the range
+  const range = Math.max(budgetMax - budgetMin, 500);
+  const sweetSpot = budgetMin + (budgetMax - budgetMin) * 0.6;
   const dist = Math.abs(cam.price - sweetSpot) / range;
   score += Math.max(0, (1 - dist) * 8);
 
@@ -2082,15 +2184,23 @@ function explainMissedCamera(camId) {
   const reasons = [];
 
   // Budget check
-  const budgetIdx = QUESTIONS[0].opts.indexOf(answers.budget);
-  const budgetMax = BUDGET_RANGES[budgetIdx][1];
-  const budgetMin = BUDGET_RANGES[budgetIdx][0];
-  if (cam.price >= budgetMax) {
-    reasons.push({type:'negative', icon:'💰', text:`At $${cam.price.toLocaleString()}, it's over your ${answers.budget} budget`});
-  } else if (cam.price < budgetMin * 0.5) {
+  let bMin, bMax, budgetLabel;
+  if (typeof answers.budget === 'object') {
+    bMin = answers.budget.min;
+    bMax = answers.budget.max >= 8000 ? 100000 : answers.budget.max;
+    budgetLabel = '$' + answers.budget.min.toLocaleString() + '–$' + (answers.budget.max >= 8000 ? '8,000+' : answers.budget.max.toLocaleString());
+  } else {
+    const budgetIdx = QUESTIONS[0].opts.indexOf(answers.budget);
+    bMax = BUDGET_RANGES[budgetIdx] ? BUDGET_RANGES[budgetIdx][1] : 100000;
+    bMin = BUDGET_RANGES[budgetIdx] ? BUDGET_RANGES[budgetIdx][0] : 0;
+    budgetLabel = answers.budget;
+  }
+  if (cam.price > bMax) {
+    reasons.push({type:'negative', icon:'💰', text:`At $${cam.price.toLocaleString()}, it's over your ${budgetLabel} budget`});
+  } else if (cam.price < bMin * 0.5) {
     reasons.push({type:'neutral', icon:'💰', text:`At $${cam.price.toLocaleString()}, it's well below your budget range — you might be leaving features on the table`});
   } else {
-    reasons.push({type:'positive', icon:'💰', text:`$${cam.price.toLocaleString()} fits within your ${answers.budget} budget`});
+    reasons.push({type:'positive', icon:'💰', text:`$${cam.price.toLocaleString()} fits within your ${budgetLabel} budget`});
   }
 
   // Use cases
