@@ -1267,7 +1267,7 @@ const QUESTIONS = [
 {id:'ndfilter',q:"Do you need built-in ND filters?",opts:['Yes, I shoot run-and-gun outdoors','Would be nice','Not important']},
 {id:'colorgrade',q:"How much do you color grade?",opts:['Heavy grading — I want RAW or Log','Light grading — just need a good starting point','Minimal — I want great color straight out of camera']},
 {id:'recording',q:"Any preference on recording media?",opts:['SD cards — cheap and easy','CFexpress — I want the best quality','Whatever gets the job done']},
-{id:'dualuse',q:"Will this be your only camera?",opts:['Yes, it needs to do everything','No, I have other cameras for different jobs','Buying my first camera']}
+{id:'sensor',q:"Do you have a sensor size preference?",opts:['Full Frame','APS-C / Super 35','Micro Four Thirds','Smaller (1 inch or compact)','Doesn\'t matter / I don\'t know']}
 ];
 
 const BUDGET_RANGES = [[0,1000],[1000,2000],[2000,4000],[4000,6000],[6000,100000]];
@@ -1613,19 +1613,23 @@ function scoreCamera(cam, ans) {
     if (cam.cardType && cam.cardType.includes('CFexpress')) score += 5;
   }
 
-  // Dual use / only camera
-  if (ans.dualuse === 'Yes, it needs to do everything') {
-    // Versatile cameras score higher — photo capable, good AF, stabilization
-    if (cam.photoCapable && cam.photoQuality !== 'none') score += 4;
-    if (cam.autofocus === 'excellent') score += 3;
-    if (cam.stabilization) score += 3;
-    if (cam.primaryUseCases.length >= 4) score += 3;
-  } else if (ans.dualuse === 'Buying my first camera') {
-    // Beginner-friendly: AF, stabilization, photo capable, lighter
-    if (cam.experienceLevel.includes('beginner')) score += 6;
-    if (cam.autofocus === 'excellent' || cam.autofocus === 'good') score += 3;
-    if (cam.stabilization) score += 3;
-    if (cam.photoCapable) score += 3;
+  // Sensor size
+  if (ans.sensor && ans.sensor !== 'Doesn\'t matter / I don\'t know') {
+    const sensorLower = cam.sensorSize.toLowerCase();
+    if (ans.sensor === 'Full Frame') {
+      if (sensorLower === 'full frame') score += 10;
+      else score -= 4;
+    } else if (ans.sensor === 'APS-C / Super 35') {
+      if (sensorLower.includes('aps-c') || sensorLower.includes('super 35')) score += 10;
+      else if (sensorLower === 'full frame') score += 2; // close enough, not a dealbreaker
+      else score -= 4;
+    } else if (ans.sensor === 'Micro Four Thirds') {
+      if (sensorLower.includes('micro four thirds')) score += 10;
+      else score -= 4;
+    } else if (ans.sensor === 'Smaller (1 inch or compact)') {
+      if (sensorLower.includes('inch')) score += 10;
+      else score -= 4;
+    }
   }
 
   // Dual slots bonus
@@ -1904,8 +1908,13 @@ function scoreCameraIgnoringBudget(cam, ans) {
   else if (ans.colorgrade === 'Minimal — I want great color straight out of camera') { if (cam.rawVideo && !cam.photoCapable) score -= 2; score += 3; }
   if (ans.recording === 'SD cards — cheap and easy') { if (cam.cardType && cam.cardType.includes('SD')) score += 5; else score -= 2; }
   else if (ans.recording === 'CFexpress — I want the best quality') { if (cam.cardType && cam.cardType.includes('CFexpress')) score += 5; }
-  if (ans.dualuse === 'Yes, it needs to do everything') { if (cam.photoCapable) score += 4; if (cam.autofocus === 'excellent') score += 3; if (cam.stabilization) score += 3; if (cam.primaryUseCases.length >= 4) score += 3; }
-  else if (ans.dualuse === 'Buying my first camera') { if (cam.experienceLevel.includes('beginner')) score += 6; if (cam.autofocus === 'excellent' || cam.autofocus === 'good') score += 3; if (cam.stabilization) score += 3; if (cam.photoCapable) score += 3; }
+  if (ans.sensor && ans.sensor !== 'Doesn\'t matter / I don\'t know') {
+    const sl = cam.sensorSize.toLowerCase();
+    if (ans.sensor === 'Full Frame') { if (sl === 'full frame') score += 10; else score -= 4; }
+    else if (ans.sensor === 'APS-C / Super 35') { if (sl.includes('aps-c') || sl.includes('super 35')) score += 10; else if (sl === 'full frame') score += 2; else score -= 4; }
+    else if (ans.sensor === 'Micro Four Thirds') { if (sl.includes('micro four thirds')) score += 10; else score -= 4; }
+    else if (ans.sensor === 'Smaller (1 inch or compact)') { if (sl.includes('inch')) score += 10; else score -= 4; }
+  }
   if (cam.dualSlots) score += 3;
   if (cam.rawVideo && selectedCases.some(sc => ['narrative film','commercial','music video'].includes(sc))) score += 3;
   if (cam.maxVideoResolution === '8K') score += 3; else if (['6K','6.2K','5.7K'].includes(cam.maxVideoResolution)) score += 2;
@@ -2293,12 +2302,19 @@ function explainMissedCamera(camId) {
     reasons.push({type:'positive', icon:'🎨', text:`Internal RAW recording for maximum grading flexibility`});
   }
 
-  // Dual use
-  if (answers.dualuse === 'Yes, it needs to do everything' && !cam.photoCapable) {
-    reasons.push({type:'negative', icon:'🔄', text:`Video only — can't shoot stills, and you need it to do everything`});
-  }
-  if (answers.dualuse === 'Buying my first camera' && !cam.experienceLevel.includes('beginner')) {
-    reasons.push({type:'neutral', icon:'🎓', text:`Aimed at ${cam.experienceLevel.join('/')} users — might have a steeper learning curve`});
+  // Sensor size
+  if (answers.sensor && answers.sensor !== 'Doesn\'t matter / I don\'t know') {
+    const sl = cam.sensorSize.toLowerCase();
+    let sensorMatch = false;
+    if (answers.sensor === 'Full Frame') sensorMatch = sl === 'full frame';
+    else if (answers.sensor === 'APS-C / Super 35') sensorMatch = sl.includes('aps-c') || sl.includes('super 35');
+    else if (answers.sensor === 'Micro Four Thirds') sensorMatch = sl.includes('micro four thirds');
+    else if (answers.sensor === 'Smaller (1 inch or compact)') sensorMatch = sl.includes('inch');
+    if (!sensorMatch) {
+      reasons.push({type:'negative', icon:'📐', text:`${cam.sensorSize} sensor — you selected ${answers.sensor}`});
+    } else {
+      reasons.push({type:'positive', icon:'📐', text:`${cam.sensorSize} sensor matches your preference`});
+    }
   }
 
   // Score comparison
